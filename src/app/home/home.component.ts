@@ -7,5 +7,35 @@ import { Component } from '@angular/core';
 })
 export class HomeComponent {
  
+  public signUpModel :any;
+  public signInModel :any;
 
+  ngOnInit(){
+    this.signUpModel = document.getElementById("signUp");
+    this.signInModel = document.getElementById("signIn");
+  }
+
+  signUp(){
+    if(this.signUpModel != null){
+      this.signUpModel.style.display = "block";
+    }
+  }
+
+  signIn(){
+    if(this.signInModel != null){
+      this.signInModel.style.display = "block";
+    }
+  }
+
+  closeSignUp(){
+    if(this.signUpModel != null){
+      this.signUpModel.style.display = "none";
+    }
+  }
+
+  closeSignIn(){
+    if(this.signInModel != null){
+      this.signInModel.style.display = "none";
+    }
+  }
 }

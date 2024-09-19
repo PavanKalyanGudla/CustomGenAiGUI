@@ -1,0 +1,46 @@
+<div class="container">
+    <div class="row">
+        <h2 style="text-align:center">Sign Up to Create New Account</h2>
+        <div class="vl">
+            <span class="vl-innertext">
+                <img src="../../assets/logo.png" alt="" width="35px;">
+            </span>
+        </div>
+
+        <div class="col">
+            <div class="grid-container">
+                <div>
+                    <label for="firstName">First Name:</label>
+                    <input type="text" id="firstName" name="firstName">
+                </div>
+                <div>
+                    <label for="lastName">Last Name:</label>
+                    <input type="text" id="lastName" name="lastName">
+                </div>
+            </div>
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email">
+        </div>
+
+        <div class="col">
+            <label for="password">Password:&emsp;<i class="fas fa-eye" [style.color]="showPassColor?'blue':''"
+                    (click)="showPassword()" title="Show Password !"></i></label>
+            <input type="password" id="password" name="password" [(ngModel)]="password" #showPass>
+            <p *ngIf="!verifyPassword()" style="color:red;font-size: 13px;">9-15 chars, 1 uppercase, lowercase, number,
+                and special char</p>
+
+            <label for="confirmPassword">Confirm Password:&emsp;<i class="fas fa-eye"
+                    [style.color]="showConfPassColor?'blue':''" (click)="showConfirmPassword()"
+                    title="Show Confirm Password !"></i></label>
+            <input type="password" id="confirmPassword" name="confirmPassword" [(ngModel)]="confirmPassword"
+                #showConfPass>
+            <p *ngIf="!verifyConfirmPassword()" style="color:red;font-size: 13px;">9-15 chars, 1 uppercase, lowercase,
+                number, and special char.</p>
+        </div>
+    </div>
+    <div class="row" style="display:flex;justify-content: center;align-items: center;padding-top: 10px;">
+        <div class="hero-text-btns">
+            <a style="background-color: green;border-radius: 23px;" id="signUp">Signup</a>
+        </div>
+    </div>
+</div>

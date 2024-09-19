@@ -19,8 +19,8 @@
             <h2>Unlock New Horizons with the Power of Generative AI</h2>
             <p>Generative AI is capable of generating text, images, videos, or other data using generative models, often in response to prompts. Generative AI models learn the patterns and structure of their input training data and then generate new data that has similar characteristics.</p>
             <div class="hero-text-btns">
-                <a href="#"><i class="fa-solid fa-user-plus"></i> Signup</a>
-                <a href="#"><i class="fa-solid fa-sign-in-alt"></i> SignIn</a>
+                <a (click)="signUp()"><i class="fa-solid fa-user-plus"></i> Signup</a>
+                <a (click)="signIn()"><i class="fa-solid fa-sign-in-alt"></i> SignIn</a>
             </div>
         </div>
     </div>
@@ -174,3 +174,21 @@
         </div>
     </div>
 </section>
+
+<div id="signUp" class="modal">
+    <div class="modal-content">
+      <span class="close" (click)="closeSignUp()">&times;</span>
+      <div style="margin-top: 40px;">
+        <app-sign-up></app-sign-up>
+      </div>
+    </div>
+</div>
+
+<div id="signIn" class="modal">
+    <div class="signIn-modal-content">
+      <span class="close" (click)="closeSignIn()">&times;</span>
+      <div style="margin-top: 40px;">
+        <app-sign-in></app-sign-in>
+      </div>
+    </div>
+</div>
