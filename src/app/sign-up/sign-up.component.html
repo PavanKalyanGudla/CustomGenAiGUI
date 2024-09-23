@@ -11,15 +11,15 @@
             <div class="grid-container">
                 <div>
                     <label for="firstName">First Name:</label>
-                    <input type="text" id="firstName" name="firstName">
+                    <input type="text" id="firstName" name="firstName" [(ngModel)]="firstName">
                 </div>
                 <div>
                     <label for="lastName">Last Name:</label>
-                    <input type="text" id="lastName" name="lastName">
+                    <input type="text" id="lastName" name="lastName"  [(ngModel)]="lastName">
                 </div>
             </div>
             <label for="email">Email:</label>
-            <input type="email" id="email" name="email">
+            <input type="email" id="email" name="email"  [(ngModel)]="email">
         </div>
 
         <div class="col">
@@ -40,7 +40,7 @@
     </div>
     <div class="row" style="display:flex;justify-content: center;align-items: center;padding-top: 10px;">
         <div class="hero-text-btns">
-            <a style="background-color: green;border-radius: 23px;" id="signUp">Signup</a>
+            <a style="background-color: green;border-radius: 23px;" id="signUp" (click)="signUp()">Signup</a>
         </div>
     </div>
 </div>
