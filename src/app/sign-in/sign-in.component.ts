@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { HttpService } from '../Services/http-service.service';
 import { ResponseObj } from '../Model/response-obj';
 import { User } from '../Model/user';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-sign-in',
@@ -16,7 +17,8 @@ export class SignInComponent {
   password:String="";
   userObj : User = new User();
 
-  constructor(private _httpService : HttpService){}
+  constructor(private _httpService : HttpService,
+    private _router : Router){}
   
   forgotPassword(){
     this.forgotpasswordFlag = true;
@@ -43,7 +45,10 @@ export class SignInComponent {
         this._httpService.userLogin(this.email,this.password).subscribe((data:ResponseObj)=>{
           if(data.responseCode == "200" && data.responseMsg=="SUCCESS"){
             this.userObj = data.responseModel;
-            alert(this.userObj.firstName);
+            localStorage.setItem("userObjectData",JSON.stringify(this.userObj));
+            if(null != localStorage.getItem("userObjectData")){
+              this._router.navigate(["/userAfterLogin"]);
+            }
           }else{
             alert("User Not Exists");
           }
