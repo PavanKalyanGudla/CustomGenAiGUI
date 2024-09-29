@@ -25,7 +25,6 @@ ul{
     background: #1b1b1b; 
   }
 #hero{
-    min-height: 455px;
     background-color: #f5f7fb;
     display: flex;
     flex-direction: column;
@@ -293,6 +292,9 @@ ul{
 .s-box4 i{
     background-color: #faf4b8;
 }
+.s-box5 i{
+    background-color: #d4e2ff;
+}
 
 .s-box1{
     background-color: #ecf6fd;
@@ -305,6 +307,9 @@ ul{
 }
 .s-box4{
     background-color: #fcffcf;
+}
+.s-box5{
+    background-color: #ecf6fd;
 }
 footer{
     width: 100%;

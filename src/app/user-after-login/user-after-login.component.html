@@ -1,0 +1,149 @@
+<section id="hero">
+    <nav class="navigation">
+        <img width="60px" src="../../assets/logo.png">
+        <input type="checkbox" class="menu-btn" id="menu-btn">
+         <div>
+            <select id="service" (change)="selectService()" [(ngModel)]="selectedService">
+                <option value="gptbot">Gpt Bot</option>
+                <option value="imagegenerate">Image Generation</option>
+                <option value="imageanalysis">Image Analysis</option>
+                <option value="translate">Translation</option>
+                <option value="resume">Resume Analysis</option>
+            </select>
+            <img src="../../assets/User.jpeg" class="user-pic" alt="" (click)="openSettings()" *ngIf="!profileFlag">
+            <img [src]="profilePicSrc" class="user-pic" alt="" (click)="openSettings()" *ngIf="profileFlag">
+         </div>
+    </nav>
+    <main class="body-container">
+        <aside id="left" class="flex-item">
+            Left side content for testing web page layout structure
+        </aside>
+        <aside id="middle" class="flex-item">
+            <div class="flex-container">
+                <div class="top-div" *ngIf="selectedService == 'gptbot'">
+                    <div class="msg-inbox" *ngIf="!infoFlag">
+                        <section class="gen-ai-section">
+                            <h1>Unlock the Power of Generative AI</h1>
+                            <p>Generative AI is transforming the way we interact with technology, from creating text and art to answering complex questions. Explore the limitless potential of AI-driven innovation and creativity!</p>
+                            <div style="display: flex;flex-direction: row;gap: 10px;flex-wrap: wrap;justify-content: center;margin-top: 5%;">
+                                <div class="service-box s-box1">
+                                    <i class="fa-solid fa-comments"></i>
+                                </div>
+                                <div class="service-box s-box2">
+                                    <i class="fa-solid fa-image"></i>
+                                </div>
+                                <div class="service-box s-box3">
+                                    <i class="fa-solid fa-project-diagram"></i>
+                                </div>
+                                <div class="service-box s-box4">
+                                    <i class="fa-solid fa-language"></i>
+                                </div>
+                                <div class="service-box s-box5">
+                                    <i class="fa-solid fa-file-alt"></i>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                    <div class="msg-inbox" *ngIf="infoFlag">
+                        <div *ngFor="let i of messageList">
+                            <div>
+                                <div class="outgoing-chats-msg">
+                                    <p>{{i.question}}</p>
+                                </div>
+                            </div>
+                            <div class="received-msg">
+                                <div class="received-msg-inbox">
+                                    <p>{{i.answer}}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="top-div" *ngIf="selectedService == 'imagegenerate'">
+                    1
+                </div>
+                <div class="top-div" *ngIf="selectedService == 'imageanalysis'">
+                    2
+                </div>
+                <div class="top-div" *ngIf="selectedService == 'translate'">
+                    3
+                </div>
+                <div class="top-div" *ngIf="selectedService == 'resume'">
+                    4
+                </div>
+                <div class="bottom-div">
+                    <div class="search-layout">
+                        <div >
+                            <form action="#" class="search-bar">
+                                <i class="fa-solid fa-paperclip"></i>
+                                <input type="text" name="chat" placeholder="Message for get Clarified" [(ngModel)]="inputMsg1" autocomplete="off">
+                                <button type="submit" (click)="getResponse()">
+                                    <i class="fas fa-paper-plane" id="sendMsg"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </main>
+</section>
+
+<div class="modal1" [style.display]="userSettingsFlag">
+    <div class="modal1-content animate">
+            <div class="sub-menu">
+                <span class="close" (click)="closeSettingsPopup()">&times;</span>
+                <div class="user-info">
+                    <div class="nav-user-icon1">
+                        <img src="../../assets/User.jpeg" alt="" *ngIf="!profileFlag">
+                        <img [src]="profilePicSrc" alt="" *ngIf="profileFlag">
+                    </div>
+                    <h5>{{this.userObj.firstName}} {{this.userObj.lastName}}</h5>
+                </div>
+                <hr>
+                <a class="sub-menu-link">
+                    <p (click)="editProfilePopUp()"><i class="fa fa-user-pen"></i> Edit Profile</p>
+                </a>
+                <a class="sub-menu-link">
+                    <p><i class="fa fa-gear"></i> Settings & Privacy</p>
+                </a>
+                <a class="sub-menu-link" >
+                    <p><i class="fa fa-solid fa-hand-holding-hand"></i> Help & Support</p>
+                </a>
+                <a class="sub-menu-link" (click)="logOut()">
+                    <p id="logout"><i class="fa fa-sign-out-alt"></i> LogOut</p>
+                </a>
+            </div>
+    </div>
+</div>
+
+<div id="editProfile" class="modal">
+    <div class="modal-content">
+      <span class="close" (click)="closeEditProfilePopUp()">&times;</span>
+      <div style="margin-top: 40px;">
+        <h3 style="text-align: center;">
+            <span style="color: red;">{{this.userObj.firstName}} {{this.userObj.lastName}}</span> Profile
+        </h3>
+        <div class="editContainer">
+            <div style="width:50%;display:flex;justify-content: center;align-items: center;">
+                <div class="container1">
+                    <div class="div1">
+                        <div class="hidden-element upload-div" id="uploadDiv" style="margin:70px 0 0 0;">
+                            <i class="fa fa-camera" style="font-size:50px;"></i>
+                            <input type="file" id="fileInput" accept=".jpg, .jpeg, .png">
+                        </div>
+                    </div>
+                    <div class="div2 nav-user-icon">
+                        <img src="../../assets/User.jpeg" alt="" *ngIf="!profileFlag">
+                        <img [src]="profilePicSrc" alt="" *ngIf="profileFlag">
+                    </div>
+                </div>
+            </div>
+            <div style="width:50%;">
+                hii
+            </div>
+            
+        </div>
+      </div>
+    </div>
+</div>

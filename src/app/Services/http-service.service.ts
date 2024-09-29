@@ -24,4 +24,18 @@ export class HttpService {
     return this._httpClient.get<ResponseObj>(this.host+"/loginUser?email="+email+"&password="+password);
   }
 
+  uploadUserProfile(userId:String,file : File):any{
+    const formData = new FormData();
+    formData.append('file',file);
+    return this._httpClient.post(this.host+"/uploadUserProfile?userId="+userId,formData, {responseType : 'text'});
+  }
+
+  getProfilePic(email : String, password : String):any{
+    return this._httpClient.get(this.host+"/getProfilePic?email="+email+"&password="+password,{responseType:'arraybuffer',});
+  }
+
+  chatGptApi(prompt:String):any{
+    return this._httpClient.post(this.host+"/chatGptApi?prompt="+prompt,{responseType : 'text'});
+  }
+
 }
