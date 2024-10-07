@@ -15,67 +15,64 @@
          </div>
     </nav>
     <main class="body-container">
-        <aside id="left" class="flex-item">
-            Left side content for testing web page layout structure
+        <button class="toggle-button" (click)="leftContainerEvent()">☰</button>
+        <aside id="left" class="flex-item sidebar">
+            <div class="leftContainer">
+                <div class="leftContainerItem" *ngFor="let i of (transactionsMap | keyvalue : compareFn)" (click)="loadTransaction(i.key)">
+                    {{i.key}}
+                </div>
+            </div>
         </aside>
         <aside id="middle" class="flex-item">
             <div class="flex-container">
-                <div class="top-div" *ngIf="selectedService == 'gptbot'">
+                <div class="top-div">
                     <div class="msg-inbox" *ngIf="!infoFlag">
                         <section class="gen-ai-section">
-                            <h1>Unlock the Power of Generative AI</h1>
-                            <p>Generative AI is transforming the way we interact with technology, from creating text and art to answering complex questions. Explore the limitless potential of AI-driven innovation and creativity!</p>
+                            <h1>{{heading}}</h1>
+                            <p>{{paragraph}}</p>
                             <div style="display: flex;flex-direction: row;gap: 10px;flex-wrap: wrap;justify-content: center;margin-top: 5%;">
-                                <div class="service-box s-box1">
+                                <div class="service-box s-box1" (click)="selectService1('gptbot')">
                                     <i class="fa-solid fa-comments"></i>
                                 </div>
-                                <div class="service-box s-box2">
+                                <div class="service-box s-box2" (click)="selectService1('imagegenerate')">
                                     <i class="fa-solid fa-image"></i>
                                 </div>
-                                <div class="service-box s-box3">
+                                <div class="service-box s-box3" (click)="selectService1('imageanalysis')">
                                     <i class="fa-solid fa-project-diagram"></i>
                                 </div>
-                                <div class="service-box s-box4">
+                                <div class="service-box s-box4" (click)="selectService1('translate')">
                                     <i class="fa-solid fa-language"></i>
                                 </div>
-                                <div class="service-box s-box5">
+                                <div class="service-box s-box5" (click)="selectService1('resume')">
                                     <i class="fa-solid fa-file-alt"></i>
                                 </div>
                             </div>
                         </section>
                     </div>
                     <div class="msg-inbox" *ngIf="infoFlag">
-                        <div *ngFor="let i of messageList">
-                            <div>
-                                <div class="outgoing-chats-msg">
-                                    <p>{{i.question}}</p>
+                            <div *ngFor="let i of transactionList">
+                                <div>
+                                    <div class="outgoing-chats-msg">
+                                        <p>{{i.question}}</p>
+                                    </div>
+                                </div>
+                                <div class="received-msg">
+                                    <div class="received-msg-inbox">
+                                        <p *ngIf="selectedService == 'gptbot'">{{i.answer}}</p>
+                                        <img *ngIf="selectedService == 'imagegenerate'" [src]="i.answer" alt="No Image">
+                                        <p *ngIf="selectedService == 'imageanalysis'">{{i.answer}}</p>
+                                        <p *ngIf="selectedService == 'translate'">{{i.answer}}</p>
+                                        <p *ngIf="selectedService == 'resume'">{{i.answer}}</p>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="received-msg">
-                                <div class="received-msg-inbox">
-                                    <p>{{i.answer}}</p>
-                                </div>
-                            </div>
-                        </div>
                     </div>
-                </div>
-                <div class="top-div" *ngIf="selectedService == 'imagegenerate'">
-                    1
-                </div>
-                <div class="top-div" *ngIf="selectedService == 'imageanalysis'">
-                    2
-                </div>
-                <div class="top-div" *ngIf="selectedService == 'translate'">
-                    3
-                </div>
-                <div class="top-div" *ngIf="selectedService == 'resume'">
-                    4
                 </div>
                 <div class="bottom-div">
                     <div class="search-layout">
                         <div >
                             <form action="#" class="search-bar">
-                                <i class="fa-solid fa-paperclip"></i>
+                                <i class="fa-solid fa-paperclip" *ngIf="selectedService == 'imageanalysis'"></i>
                                 <input type="text" name="chat" placeholder="Message for get Clarified" [(ngModel)]="inputMsg1" autocomplete="off">
                                 <button type="submit" (click)="getResponse()">
                                     <i class="fas fa-paper-plane" id="sendMsg"></i>

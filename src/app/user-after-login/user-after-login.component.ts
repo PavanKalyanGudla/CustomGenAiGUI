@@ -2,7 +2,8 @@ import { ChangeDetectorRef, Component } from '@angular/core';
 import { User } from '../Model/user';
 import { Router } from '@angular/router';
 import { HttpService } from '../Services/http-service.service';
-import { ChatgptResponse } from '../Model/chatgpt-response';
+import { ChatTransaction } from '../Model/chat-transaction';
+import { ImageChatHistory } from '../Model/image-chat-history';
 
 @Component({
   selector: 'app-user-after-login',
@@ -16,13 +17,18 @@ export class UserAfterLoginComponent {
   selectedFile: File | null = null;
   profileFlag:boolean=false;
   profilePicSrc: string | ArrayBuffer | undefined;
+  heading:String = "Unlock the Power of Generative AI";
+  public sidebar : any;
 
   ngOnInit(){
     let userObjStr = localStorage.getItem("userObjectData");
+    this.sidebar = document.getElementById('left');
     if(userObjStr != null){
       this.userObj = JSON.parse(userObjStr);
       this.editProfile = document.getElementById("editProfile");
       this.getProfilePic();
+      this.getChatHistory();
+      this.getImageChatHistory();
     }
     const fileInput = document.getElementById('fileInput');
     if(fileInput){
@@ -127,15 +133,14 @@ export class UserAfterLoginComponent {
     }
   }
 
-  SubmitProfilePic(file:File) {
-    console.log(file.size);
+  SubmitProfilePic(file: File) {
     if (!file) {
       alert('No file selected.');
       return;
     }
-    this._httpService.uploadUserProfile(this.userObj.userId,file).subscribe((data : any)=>{
+    this._httpService.uploadUserProfile(this.userObj.userId, file).subscribe((data: any) => {
       alert(data);
-      if(data){
+      if (data) {
         this.getProfilePic();
       }
     });
@@ -160,30 +165,153 @@ export class UserAfterLoginComponent {
 
   inputMsg1:String="";
   infoFlag:boolean=false;
+  transactionList: Array<{ question: String, answer: any }> = [];
   messageList: Array<{ question: String, answer: any }> = [];
+  imageList: Array<{ question: String, answer: any }> = [];
   getResponse(){
-    this._httpService.chatGptApi(this.inputMsg1).subscribe((data:ChatgptResponse) =>{
-      let text = data.choices[0].message.content;
-      // const element = document.getElementById("typewriter-text");
-      // if (index < text.length) {
-      //   element.innerHTML += text.charAt(index);
-      //   index++;
-      //   setTimeout(typeText, 50);
-      // }
-      this.messageList.push({ question: this.inputMsg1, answer: text});
+    if(this.inputMsg1!="" && this.inputMsg1!=" " &&this.inputMsg1.trim()!=""){
+      if(this.selectedService=='gptbot'){
+        this._httpService.chatGptApi(this.userObj,this.inputMsg1).subscribe((data:any) =>{
+          let text = data;
+          this.messageList.push({ question: this.inputMsg1, answer: text});
+          this.getChatHistory();
+        })
+      }else if(this.selectedService=="imagegenerate"){
+        this._httpService.imageChatGptApi(this.userObj,this.inputMsg1).subscribe((data:ArrayBuffer) => {
+          let blob = new Blob([data], { type: 'image/jpeg' });
+          const reader = new FileReader();
+          reader.readAsDataURL(blob);
+          reader.onloadend = () => {
+            let image = reader.result;
+            this.imageList.push({ question: this.inputMsg1, answer: image });
+          };
+          this.getImageChatHistory();
+        })
+      }else if(this.selectedService=="imageanalysis"){
+        
+      }else if(this.selectedService=="translate"){
+        
+      }else if(this.selectedService=="resume"){
+        
+      }
       this.inputMsg1 = "";
-      this.infoFlag=true;
-    })
-    
+    }
   }
+
+  transactionsMap: { [date: string]: ChatTransaction[] | ImageChatHistory[] } = {};
+  chatTransactionsMap: { [date: string]: ChatTransaction[] } = {};
+  imageChatTransactionsMap: { [date: string]: ImageChatHistory[] } = {};
+  getChatHistory(){
+    this._httpService.getChatHistory(this.userObj.email,this.userObj.password).subscribe((data) =>{
+      this.chatTransactionsMap=data;
+      this.transactionsMap = this.chatTransactionsMap;
+      if(this.chatTransactionsMap != null){
+        this.addTodaysChatTransactionsToMessageList(this.getFormattedDate());
+      }
+    })
+  }
+
+  getImageChatHistory(){
+    this._httpService.getImageChatHistory(this.userObj.email,this.userObj.password).subscribe((data) =>{
+      this.imageChatTransactionsMap=data;
+      if(this.imageChatTransactionsMap != null){
+        this.addTodaysImageChatTransactionsToMessageList(this.getFormattedDate());
+      }
+    })
+  }
+
+  compareFn = (a: any, b: any): number => {
+    const dateA = new Date(a.key).getTime();
+    const dateB = new Date(b.key).getTime();
+    return dateB - dateA;
+  };
 
   selectedService:String="gptbot";
+  paragraph:String="Generative AI is transforming the way we interact with technology, from creating text and art to answering complex questions. Explore the limitless potential of AI-driven innovation and creativity!";
   selectService(){
-    // gptbot
-    // imagegenerate
-    // imageanalysis
-    // translate
-    // resume
+    this.transactionList=[];
+    this.transactionsMap={};
+    if(this.selectedService=="gptbot"){
+      this.heading = "Unlock the Power of Generative AI";
+      this.transactionList=this.messageList;
+      this.transactionsMap=this.chatTransactionsMap;
+    }else if(this.selectedService=="imagegenerate"){
+      this.heading = "Unleash Creativity with Gen AI";
+      this.transactionList = this.imageList;
+      this.transactionsMap = this.imageChatTransactionsMap;
+    }else if(this.selectedService=="imageanalysis"){
+      this.heading = "Transform Your Insights with Gen AI";
+    }else if(this.selectedService=="translate"){
+      this.heading = "Break Language Barriers with Gen AI";
+    }else if(this.selectedService=="resume"){
+      this.heading = "Elevate Your Hiring Process with Gen AI";
+    }
+    this.infoFlag=(this.transactionList.length != 0)?true:false;
   }
 
+  selectService1(value : any){
+    this.selectedService=value;
+    this.selectService();
+  }
+
+  loadTransaction(e : any){
+    if(this.selectedService=="gptbot"){
+      this.addTodaysChatTransactionsToMessageList(e);
+    }else if(this.selectedService=="imagegenerate"){
+      this.addTodaysImageChatTransactionsToMessageList(e);
+      this.transactionList = this.imageList;
+    }else if(this.selectedService=="imageanalysis"){
+    }else if(this.selectedService=="translate"){
+    }else if(this.selectedService=="resume"){
+    }
+  }
+
+  getFormattedDate() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  addTodaysChatTransactionsToMessageList(date : any) {
+    const today = date;
+    if (this.chatTransactionsMap.hasOwnProperty(today)) {
+      this.messageList=[];
+      this.chatTransactionsMap[today].forEach(transaction => {
+        this.messageList.push({
+          question: transaction.question,
+          answer: transaction.answer
+        });
+      });
+      this.transactionList = this.messageList;
+      if(this.messageList.length == 0){
+        this.infoFlag = false;
+      }else{
+        this.infoFlag = true;
+      }
+    }
+  }
+
+  leftContainerEvent(){
+    this.sidebarOpen = !this.sidebarOpen;
+  }
+  sidebarOpen: boolean = false;
+
+  addTodaysImageChatTransactionsToMessageList(date : any) {
+    const today = date;
+    if (this.imageChatTransactionsMap.hasOwnProperty(today)) {
+      this.imageList=[];
+      this.imageChatTransactionsMap[today].forEach(transaction => {
+        this.imageList.push({
+          question: transaction.question,
+          answer: "data:application/octet-stream;base64,"+transaction.answer
+        });
+      });
+      if(this.imageList.length == 0){
+        this.infoFlag = false;
+      }else{
+        this.infoFlag = true;
+      }
+    }
+  }
 }
