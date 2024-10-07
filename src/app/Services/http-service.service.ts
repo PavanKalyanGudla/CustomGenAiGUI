@@ -2,6 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http'
 import { User } from '../Model/user';
 import { ResponseObj } from '../Model/response-obj';
+import { ChatTransaction } from '../Model/chat-transaction';
+import { Observable } from 'rxjs';
+import { ImageChatHistory } from '../Model/image-chat-history';
 
 @Injectable({
   providedIn: 'root'
@@ -34,8 +37,28 @@ export class HttpService {
     return this._httpClient.get(this.host+"/getProfilePic?email="+email+"&password="+password,{responseType:'arraybuffer',});
   }
 
-  chatGptApi(prompt:String):any{
-    return this._httpClient.post(this.host+"/chatGptApi?prompt="+prompt,{responseType : 'text'});
+  chatGptApi(user:User,prompt:String):any{
+    const request = {
+      user : user,
+      prompt : prompt
+    };
+    return this._httpClient.post(this.host+"/chatGptApi",request,{responseType : 'text'});
+  }
+
+  getChatHistory(email : String, password : String):Observable<{ [date: string]: ChatTransaction[] }>{
+    return this._httpClient.get<{ [date: string]: ChatTransaction[] }>(this.host+"/getChatHistory?email="+email+"&password="+password);
+  }
+
+  imageChatGptApi(user:User,prompt:String):any{
+    const request = {
+      user : user,
+      prompt : prompt
+    };
+    return this._httpClient.post(this.host+"/imageGptApi",request,{responseType : 'arraybuffer'});
+  }
+
+  getImageChatHistory(email : String, password : String):Observable<{[date: string]: ImageChatHistory[]}>{
+    return this._httpClient.get<{[date: string]: ImageChatHistory[]}>(this.host+"/getImageChatHistory?email="+email+"&password="+password);
   }
 
 }
