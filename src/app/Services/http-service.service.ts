@@ -1,10 +1,12 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http'
+import { HttpClient, HttpEventType, HttpResponse } from '@angular/common/http'
 import { User } from '../Model/user';
 import { ResponseObj } from '../Model/response-obj';
 import { ChatTransaction } from '../Model/chat-transaction';
-import { Observable } from 'rxjs';
+import { filter, map, Observable } from 'rxjs';
 import { ImageChatHistory } from '../Model/image-chat-history';
+import { ImageAnalysisTransaction } from '../Model/image-analysis-transaction';
+import { TranslationTransaction } from '../Model/translation-transaction';
 
 @Injectable({
   providedIn: 'root'
@@ -57,8 +59,26 @@ export class HttpService {
     return this._httpClient.post(this.host+"/imageGptApi",request,{responseType : 'arraybuffer'});
   }
 
+  imageAnalysisApi(userId:String,prompt:String,file : File):any{
+    const formData = new FormData();
+    formData.append('file',file);
+    return this._httpClient.post(this.host+"/imageAnalysis?userId="+userId+"&prompt="+prompt,formData, {responseType : 'text'});
+  }
+
   getImageChatHistory(email : String, password : String):Observable<{[date: string]: ImageChatHistory[]}>{
     return this._httpClient.get<{[date: string]: ImageChatHistory[]}>(this.host+"/getImageChatHistory?email="+email+"&password="+password);
+  }
+
+  getImageAnalysisHistory(email : String, password : String):Observable<{[date: string]: ImageAnalysisTransaction[]}>{
+    return this._httpClient.get<{[date: string]: ImageAnalysisTransaction[]}>(this.host+"/getImageAnalysisHistory?email="+email+"&password="+password);
+  }
+
+  translate(text:String,sourceLanguage:String,targetLanguage:String,userId:String){
+    return this._httpClient.get(this.host+"/translate?sourceLanguage="+sourceLanguage+"&targetLanguage="+targetLanguage+"&text="+text+"&userId="+userId,{responseType : 'text'});
+  }
+
+  getTranslate(userId:String){
+    return this._httpClient.get<{[date: string]: TranslationTransaction[]}>(this.host+"/getUserTranslations?userId="+userId);
   }
 
 }

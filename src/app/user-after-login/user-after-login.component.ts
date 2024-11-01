@@ -1,9 +1,13 @@
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, NgIterable, ViewChild } from '@angular/core';
 import { User } from '../Model/user';
 import { Router } from '@angular/router';
 import { HttpService } from '../Services/http-service.service';
 import { ChatTransaction } from '../Model/chat-transaction';
 import { ImageChatHistory } from '../Model/image-chat-history';
+import { ImageAnalysisTransaction } from '../Model/image-analysis-transaction';
+import { LanguageList } from '../Model/language-list';
+import { TranslationTransaction } from '../Model/translation-transaction';
+import { Observable, of, switchMap, tap } from 'rxjs';
 
 @Component({
   selector: 'app-user-after-login',
@@ -14,11 +18,40 @@ export class UserAfterLoginComponent {
 
   userObj : User = new User();
   public editProfile : any;
+  // public displayTrans : any;
   selectedFile: File | null = null;
+  analysisFile: File | null = null;
   profileFlag:boolean=false;
   profilePicSrc: string | ArrayBuffer | undefined;
+  imageAnalysisSrc: ArrayBuffer | undefined;
   heading:String = "Unlock the Power of Generative AI";
   public sidebar : any;
+  userSettingsFlag:String="none";
+  displayTransFlag:String="none";
+  inputMsg1:String="";
+  infoFlag:boolean=false;
+  transactionList: Array<{ question: String, image?:String, answer: any }> = [];
+  messageList: Array<{ question: String, answer: any }> = [];
+  imageAnalysisList: Array<{ question: String, image:String, answer: any }> = [];
+  imageList: Array<{ question: String, answer: any }> = [];
+  translatorList: Array<{ question: String, answer: any }> = [];
+  transactionsMap: { [date: string]: ChatTransaction[] | ImageChatHistory[] | ImageAnalysisTransaction[] | TranslationTransaction[]} = {};
+  chatTransactionsMap: { [date: string]: ChatTransaction[] } = {};
+  imageChatTransactionsMap: { [date: string]: ImageChatHistory[] } = {};
+  imageAnalysisTransactionsMap: { [date: string]: ImageAnalysisTransaction[] } = {};
+  translationTransactionMap : {[date: string]: TranslationTransaction[]} = {};
+  selectedService:String="gptbot";
+  sidebarOpen: boolean = false;
+  languageList = new LanguageList();
+  paragraph:String="Generative AI is transforming the way we interact with technology, from creating text and art to answering complex questions. Explore the limitless potential of AI-driven innovation and creativity!";
+ 
+  @ViewChild('uploadInput') uploadInput!: ElementRef;
+
+  constructor(private _router : Router, 
+    private _httpService : HttpService,
+    private cdr: ChangeDetectorRef
+  ){
+  }
 
   ngOnInit(){
     let userObjStr = localStorage.getItem("userObjectData");
@@ -26,9 +59,14 @@ export class UserAfterLoginComponent {
     if(userObjStr != null){
       this.userObj = JSON.parse(userObjStr);
       this.editProfile = document.getElementById("editProfile");
+      // this.displayTrans = document.getElementById("displayTrans");
+      this.transactionsMap={};
+      this.transactionList=[];
       this.getProfilePic();
       this.getChatHistory();
       this.getImageChatHistory();
+      this.getImageAnalysisHistory();
+      this.getTranslate();
     }
     const fileInput = document.getElementById('fileInput');
     if(fileInput){
@@ -47,13 +85,29 @@ export class UserAfterLoginComponent {
     }
   }
 
-  constructor(private _router : Router, 
-    private _httpService : HttpService,
-    private cdr: ChangeDetectorRef
-  ){}
+  ngAfterViewInit(): void {
+    if (!this.uploadInput) {
+      console.error('File image element is null');
+    }
+  }
+  uploadImage(){
+    if (this.uploadInput) {
+      this.uploadInput.nativeElement.click();
+    } else {
+      console.error('File image element is not available for Analysis');
+    }
+  }
 
-  userSettingsFlag:String="none";
-
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if(input && input.files && input.files.length > 0){
+      this.analysisFile = input.files[0];
+    }
+    if (!this.analysisFile) {
+      alert('No file selected');
+    }
+  }
+  
   openSettings(){
     this.userSettingsFlag = "block";
   }
@@ -163,11 +217,6 @@ export class UserAfterLoginComponent {
     })
   }
 
-  inputMsg1:String="";
-  infoFlag:boolean=false;
-  transactionList: Array<{ question: String, answer: any }> = [];
-  messageList: Array<{ question: String, answer: any }> = [];
-  imageList: Array<{ question: String, answer: any }> = [];
   getResponse(){
     if(this.inputMsg1!="" && this.inputMsg1!=" " &&this.inputMsg1.trim()!=""){
       if(this.selectedService=='gptbot'){
@@ -188,19 +237,24 @@ export class UserAfterLoginComponent {
           this.getImageChatHistory();
         })
       }else if(this.selectedService=="imageanalysis"){
-        
+        if(this.analysisFile){
+          this._httpService.imageAnalysisApi(this.userObj.userId,this.inputMsg1,this.analysisFile).subscribe((data: any) =>{
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const arrayBuffer = reader.result as ArrayBuffer;
+              this.imageAnalysisSrc = arrayBuffer;
+            };
+          });
+        }
       }else if(this.selectedService=="translate"){
         
       }else if(this.selectedService=="resume"){
         
       }
-      this.inputMsg1 = "";
+      
     }
   }
 
-  transactionsMap: { [date: string]: ChatTransaction[] | ImageChatHistory[] } = {};
-  chatTransactionsMap: { [date: string]: ChatTransaction[] } = {};
-  imageChatTransactionsMap: { [date: string]: ImageChatHistory[] } = {};
   getChatHistory(){
     this._httpService.getChatHistory(this.userObj.email,this.userObj.password).subscribe((data) =>{
       this.chatTransactionsMap=data;
@@ -220,14 +274,19 @@ export class UserAfterLoginComponent {
     })
   }
 
+  getImageAnalysisHistory(){
+    this._httpService.getImageAnalysisHistory(this.userObj.email,this.userObj.password).subscribe((data) =>{
+      this.imageAnalysisTransactionsMap=data;
+      this.addTodaysImageAnalysisTransactionsToMessageList(this.getFormattedDate());
+    })
+  }
+
   compareFn = (a: any, b: any): number => {
     const dateA = new Date(a.key).getTime();
     const dateB = new Date(b.key).getTime();
     return dateB - dateA;
   };
 
-  selectedService:String="gptbot";
-  paragraph:String="Generative AI is transforming the way we interact with technology, from creating text and art to answering complex questions. Explore the limitless potential of AI-driven innovation and creativity!";
   selectService(){
     this.transactionList=[];
     this.transactionsMap={};
@@ -241,8 +300,11 @@ export class UserAfterLoginComponent {
       this.transactionsMap = this.imageChatTransactionsMap;
     }else if(this.selectedService=="imageanalysis"){
       this.heading = "Transform Your Insights with Gen AI";
+      this.transactionList = this.imageAnalysisList;
+      this.transactionsMap= this.imageAnalysisTransactionsMap;
     }else if(this.selectedService=="translate"){
       this.heading = "Break Language Barriers with Gen AI";
+      this.transactionsMap = this.translationTransactionMap
     }else if(this.selectedService=="resume"){
       this.heading = "Elevate Your Hiring Process with Gen AI";
     }
@@ -261,9 +323,15 @@ export class UserAfterLoginComponent {
       this.addTodaysImageChatTransactionsToMessageList(e);
       this.transactionList = this.imageList;
     }else if(this.selectedService=="imageanalysis"){
+      this.addTodaysImageAnalysisTransactionsToMessageList(e);
+      this.transactionList = this.imageAnalysisList;
     }else if(this.selectedService=="translate"){
+      this.addTodaysTranslationTransactionsToMessageList(e);
+      // this.transactionList = this.translatorList;
+      this.openDisplayTransPopUp();
     }else if(this.selectedService=="resume"){
     }
+    this.infoFlag = (this.transactionList.length>0)?true:false;
   }
 
   getFormattedDate() {
@@ -284,10 +352,10 @@ export class UserAfterLoginComponent {
         });
       });
       this.transactionList = this.messageList;
-      if(this.messageList.length == 0){
-        this.infoFlag = false;
-      }else{
+      if(this.messageList.length != 0 && date == this.getFormattedDate()){
         this.infoFlag = true;
+      }else{
+        this.infoFlag = false;
       }
     }
   }
@@ -295,7 +363,6 @@ export class UserAfterLoginComponent {
   leftContainerEvent(){
     this.sidebarOpen = !this.sidebarOpen;
   }
-  sidebarOpen: boolean = false;
 
   addTodaysImageChatTransactionsToMessageList(date : any) {
     const today = date;
@@ -307,11 +374,126 @@ export class UserAfterLoginComponent {
           answer: "data:application/octet-stream;base64,"+transaction.answer
         });
       });
-      if(this.imageList.length == 0){
-        this.infoFlag = false;
-      }else{
+      if(this.messageList.length != 0 && date == this.getFormattedDate()){
         this.infoFlag = true;
+      }else{
+        this.infoFlag = false;
       }
+      this.cdr.detectChanges();
     }
   }
+
+  addTodaysImageAnalysisTransactionsToMessageList(date : any) {
+    const today = date;
+    if (this.imageAnalysisTransactionsMap.hasOwnProperty(today)) {
+      this.imageAnalysisList=[];
+      this.imageAnalysisTransactionsMap[today].forEach(transaction => {
+        this.imageAnalysisList.push({
+          question: transaction.question,
+          image: "data:application/octet-stream;base64,"+transaction.image,
+          answer: transaction.answer
+        });
+      });
+      this.cdr.detectChanges();
+    }
+  }
+
+  sourceLang : String="";
+  targetLang : String="";
+  sourceText : String="";
+  targetText : String="";
+  sourceLangSelect(event:Event){
+    const target = event.target as HTMLSelectElement | null;
+    if (target) {
+      this.sourceLang = target.value;
+    }
+  }
+  targetLangSelect(event:any){
+    const target = event.target as HTMLSelectElement | null;
+    if (target) {
+      this.targetLang = target.value;
+    }
+  }
+
+  // translate(){
+  //   if(""==this.sourceLang||""==this.targetLang||""==this.sourceText.trim()){
+  //     alert("Please Check Source/Target Language selection Or Source Text field Empty");
+  //   }else{
+  //     this._httpService.translate(this.sourceText,this.sourceLang,this.targetLang,this.userObj.userId).subscribe((data:String)=>{
+  //       this.targetText = data;
+  //       if(data){
+  //         this.getTranslate();
+  //         this.transactionsMap = this.translationTransactionMap;
+  //         console.log(this.transactionsMap);
+  //       }
+  //     })
+  //   }
+  // }
+
+  translate() {
+    if ("" == this.sourceLang || "" == this.targetLang || "" == this.sourceText.trim()) {
+      alert("Please Check Source/Target Language selection Or Source Text field Empty");
+    } else {
+      this._httpService.translate(this.sourceText, this.sourceLang, this.targetLang, this.userObj.userId)
+        .pipe(
+          switchMap((data: string) => {
+            this.targetText = data;
+            if (data) {
+              return this.getTranslateCopy();
+            } else {
+              return of(null);
+            }
+          })
+        )
+        .subscribe(() => {
+          this.transactionsMap = this.translationTransactionMap;
+          console.log(this.transactionsMap);
+          this.cdr.detectChanges();
+        });
+    }
+  }
+
+  getTranslate(){
+    this._httpService.getTranslate(this.userObj.userId).subscribe((data) =>{
+      this.translationTransactionMap = data;
+      console.log(this.translationTransactionMap);
+    });
+  }
+
+  getTranslateCopy(): Observable<any> {
+    return this._httpService.getTranslate(this.userObj.userId).pipe(
+      tap((data) => {
+        this.translationTransactionMap = data;
+      })
+    );
+  }
+
+  getIterableValue(value: PossibleTransactionArray | null | undefined): NgIterable<any> {
+    return value ?? [];
+  }
+  
+  items: { value: PossibleTransactionArray | null | undefined }[] = [
+    { value: [] },
+  ];
+
+  openDisplayTransPopUp(){
+    this.displayTransFlag="block";
+  }
+
+  addTodaysTranslationTransactionsToMessageList(date : any) {
+    const today = date;
+    if(this.translationTransactionMap.hasOwnProperty(today)) {
+      this.translatorList=[];
+      this.translationTransactionMap[today].forEach(transaction => {
+        this.translatorList.push({question: transaction.question,answer: transaction.answer});
+      });
+      this.cdr.detectChanges();
+    }
+  }
+
+  closeDisplayTransPopUp(){
+    this.displayTransFlag="none";
+  }
 }
+
+type PossibleTransactionArray = ChatTransaction[] | ImageChatHistory[] | ImageAnalysisTransaction[] | TranslationTransaction[];

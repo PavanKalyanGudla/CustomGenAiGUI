@@ -19,7 +19,10 @@
         <aside id="left" class="flex-item sidebar">
             <div class="leftContainer">
                 <div class="leftContainerItem" *ngFor="let i of (transactionsMap | keyvalue : compareFn)" (click)="loadTransaction(i.key)">
-                    {{i.key}}
+                    <p style="font-size: small;color:blueviolet">{{i.key}}</p>
+                    <div class="truncate" *ngFor="let j of  getIterableValue(i.value); index as p" style="font-size: x-small;">
+                        <p>{{p+1}}. {{j.question}}</p>
+                    </div>
                 </div>
             </div>
         </aside>
@@ -27,7 +30,7 @@
             <div class="flex-container">
                 <div class="top-div">
                     <div class="msg-inbox" *ngIf="!infoFlag">
-                        <section class="gen-ai-section">
+                        <section class="gen-ai-section" *ngIf="selectedService != 'translate'">
                             <h1>{{heading}}</h1>
                             <p>{{paragraph}}</p>
                             <div style="display: flex;flex-direction: row;gap: 10px;flex-wrap: wrap;justify-content: center;margin-top: 5%;">
@@ -48,18 +51,48 @@
                                 </div>
                             </div>
                         </section>
+                        <section *ngIf="selectedService == 'translate'">
+                            <div class="translator">
+                                <div class="translator-section">
+                                    <div class="language-select">
+                                        <select (change)="sourceLangSelect($event)">
+                                            <option *ngFor="let i of languageList.languages" [value]="i">{{i}}</option>
+                                        </select>
+                                        <div class="swap-icon">⇌</div>
+                                        <select (change)="targetLangSelect($event)">
+                                            <option *ngFor="let i of languageList.languages" [value]="i">{{i}}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="translator-section">
+                                    <div class="fromTranslate">
+                                        <textarea [(ngModel)]="sourceText" name="" id="" cols="50" rows="10"></textarea>
+                                    </div>
+                                    <div class="toTranslate">
+                                        <textarea [(ngModel)]="targetText" name="" id="" cols="50" rows="10"></textarea>
+                                    </div>
+                                </div>
+                                <div class="translator-footer">
+                                    <button (click)="translate()">Translate</button>
+                                </div>
+                            </div>
+                        </section>
                     </div>
                     <div class="msg-inbox" *ngIf="infoFlag">
                             <div *ngFor="let i of transactionList">
                                 <div>
                                     <div class="outgoing-chats-msg">
-                                        <p>{{i.question}}</p>
+                                        <p *ngIf="selectedService == 'imageanalysis'"><img [src]="i.image" alt="No Image"><br>{{i.question}}</p>
+                                        <p *ngIf="selectedService != 'imageanalysis'">{{i.question}}</p>
                                     </div>
                                 </div>
                                 <div class="received-msg">
                                     <div class="received-msg-inbox">
                                         <p *ngIf="selectedService == 'gptbot'">{{i.answer}}</p>
                                         <img *ngIf="selectedService == 'imagegenerate'" [src]="i.answer" alt="No Image">
+                                        <a [href]="i.answer" download="genAiImage.jpg" *ngIf="selectedService == 'imagegenerate'">
+                                            <i class="fas fa-download downloadButton"></i>
+                                        </a>
                                         <p *ngIf="selectedService == 'imageanalysis'">{{i.answer}}</p>
                                         <p *ngIf="selectedService == 'translate'">{{i.answer}}</p>
                                         <p *ngIf="selectedService == 'resume'">{{i.answer}}</p>
@@ -69,10 +102,11 @@
                     </div>
                 </div>
                 <div class="bottom-div">
-                    <div class="search-layout">
+                    <div class="search-layout" *ngIf="selectedService != 'translate'">
                         <div >
                             <form action="#" class="search-bar">
-                                <i class="fa-solid fa-paperclip" *ngIf="selectedService == 'imageanalysis'"></i>
+                                <i class="fa-solid fa-paperclip" (click)="uploadImage()"style="cursor:pointer;" *ngIf="selectedService == 'imageanalysis'"></i>
+                                <input type="file" #uploadInput (change)="onFileSelected($event)" accept=".jpg, .jpeg, .png" style="display:none;" />
                                 <input type="text" name="chat" placeholder="Message for get Clarified" [(ngModel)]="inputMsg1" autocomplete="off">
                                 <button type="submit" (click)="getResponse()">
                                     <i class="fas fa-paper-plane" id="sendMsg"></i>
@@ -82,6 +116,7 @@
                     </div>
                 </div>
             </div>
+            
         </aside>
     </main>
 </section>
@@ -142,5 +177,21 @@
             
         </div>
       </div>
+    </div>
+</div>
+
+<div id="displayTrans" class="animateModal" [style.display]="displayTransFlag">
+    <div class="animateModal-content">
+        <div class="modal-header">
+            <span class="close" (click)="closeDisplayTransPopUp()">&times;</span>
+        </div>
+        <div class="modal-body"></div>
+        <div class="modal-body">
+            <table>
+                <tr *ngFor="let i of translatorList">
+                    <td>{{i.question}}</td><td>{{i.answer}}</td>
+                </tr>
+            </table>
+        </div>
     </div>
 </div>
