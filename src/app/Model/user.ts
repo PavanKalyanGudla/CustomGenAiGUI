@@ -1,5 +1,4 @@
 export class User {
-
     userId!: String;
 	firstName:String | undefined;
 	lastName:String | undefined;

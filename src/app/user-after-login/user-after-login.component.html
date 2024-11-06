@@ -16,12 +16,13 @@
     </nav>
     <main class="body-container">
         <button class="toggle-button" (click)="leftContainerEvent()">☰</button>
-        <aside id="left" class="flex-item sidebar">
+        <aside id="left" class="flex-item" style="overflow-y: scroll;">
             <div class="leftContainer">
                 <div class="leftContainerItem" *ngFor="let i of (transactionsMap | keyvalue : compareFn)" (click)="loadTransaction(i.key)">
                     <p style="font-size: small;color:blueviolet">{{i.key}}</p>
                     <div class="truncate" *ngFor="let j of  getIterableValue(i.value); index as p" style="font-size: x-small;">
-                        <p>{{p+1}}. {{j.question}}</p>
+                        <p *ngIf="selectedService != 'resume'">{{p+1}}. {{j.question}}</p>
+                        <p *ngIf="selectedService == 'resume'" id="viewResumeId" (click)="openResume(j)">{{p+1}}. {{j.fileName}} <br>   {{j.roleType}}</p>
                     </div>
                 </div>
             </div>
@@ -30,7 +31,7 @@
             <div class="flex-container">
                 <div class="top-div">
                     <div class="msg-inbox" *ngIf="!infoFlag">
-                        <section class="gen-ai-section" *ngIf="selectedService != 'translate'">
+                        <section class="gen-ai-section" *ngIf="selectedService != 'translate' && selectedService != 'resume'">
                             <h1>{{heading}}</h1>
                             <p>{{paragraph}}</p>
                             <div style="display: flex;flex-direction: row;gap: 10px;flex-wrap: wrap;justify-content: center;margin-top: 5%;">
@@ -51,7 +52,7 @@
                                 </div>
                             </div>
                         </section>
-                        <section *ngIf="selectedService == 'translate'">
+                        <section *ngIf="selectedService == 'translate' && selectedService != 'resume'">
                             <div class="translator">
                                 <div class="translator-section">
                                     <div class="language-select">
@@ -77,6 +78,33 @@
                                 </div>
                             </div>
                         </section>
+                        <section *ngIf="selectedService == 'resume'">
+                            <div style="display: flex;flex-direction: row;gap: 10px;flex-wrap: wrap;justify-content: center;">
+                                <div class="resume-box s-box4">
+                                    <div class="resume-item1">
+                                        <i class="fa-solid fa-file-alt"></i>
+                                    </div>
+                                    <div class="resume-item2">
+                                        <h1>Upload Your Resume for Analysis</h1>
+                                        <div class="upload-section">
+                                            <input type="file" id="resume-upload" accept=".pdf,.doc,.docx" (change)="selectResume($event)" #resumeFileId/>
+                                        </div>
+                                    </div>
+                                    <div class="resume-item3">
+                                        <h1>Type Your Job Role</h1>
+                                        <input id="role" type="text" [(ngModel)]="resumeRole" style="width:95%;">
+                                        <div class="upload-section1">
+                                            <button class="resAnaButtom" (click)="uploadResume()">Analyze Resume</button>
+                                            <button style="background-color: red;" class="resAnaButtom" (click)="resetResume(resumeFileId)">Reset</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="service-box s-box5" *ngIf="resumeAnaFlag">
+                                    <h1>Analysis</h1>
+                                    <div [innerHTML]="resumeAnalyResp | safeHtml"></div>
+                                </div>
+                            </div>
+                        </section>
                     </div>
                     <div class="msg-inbox" *ngIf="infoFlag">
                             <div *ngFor="let i of transactionList">
@@ -88,27 +116,25 @@
                                 </div>
                                 <div class="received-msg">
                                     <div class="received-msg-inbox">
-                                        <p *ngIf="selectedService == 'gptbot'">{{i.answer}}</p>
+                                        <div *ngIf="selectedService == 'gptbot'" [innerHTML]="i.answer | safeHtml"></div>
                                         <img *ngIf="selectedService == 'imagegenerate'" [src]="i.answer" alt="No Image">
                                         <a [href]="i.answer" download="genAiImage.jpg" *ngIf="selectedService == 'imagegenerate'">
                                             <i class="fas fa-download downloadButton"></i>
                                         </a>
-                                        <p *ngIf="selectedService == 'imageanalysis'">{{i.answer}}</p>
-                                        <p *ngIf="selectedService == 'translate'">{{i.answer}}</p>
-                                        <p *ngIf="selectedService == 'resume'">{{i.answer}}</p>
+                                        <div *ngIf="selectedService == 'imageanalysis'" [innerHTML]="i.answer | safeHtml"></div>
                                     </div>
                                 </div>
                             </div>
                     </div>
                 </div>
                 <div class="bottom-div">
-                    <div class="search-layout" *ngIf="selectedService != 'translate'">
+                    <div class="search-layout" *ngIf="selectedService != 'translate' && selectedService != 'resume'">
                         <div >
                             <form action="#" class="search-bar">
                                 <i class="fa-solid fa-paperclip" (click)="uploadImage()"style="cursor:pointer;" *ngIf="selectedService == 'imageanalysis'"></i>
                                 <input type="file" #uploadInput (change)="onFileSelected($event)" accept=".jpg, .jpeg, .png" style="display:none;" />
                                 <input type="text" name="chat" placeholder="Message for get Clarified" [(ngModel)]="inputMsg1" autocomplete="off">
-                                <button type="submit" (click)="getResponse()">
+                                <button type="submit" (click)="getResponse()" #sendButton>
                                     <i class="fas fa-paper-plane" id="sendMsg"></i>
                                 </button>
                             </form>
@@ -116,7 +142,6 @@
                     </div>
                 </div>
             </div>
-            
         </aside>
     </main>
 </section>
@@ -137,10 +162,10 @@
                     <p (click)="editProfilePopUp()"><i class="fa fa-user-pen"></i> Edit Profile</p>
                 </a>
                 <a class="sub-menu-link">
-                    <p><i class="fa fa-gear"></i> Settings & Privacy</p>
+                    <p (click)="openAccountSettingsPopup()"><i class="fa fa-gear"></i> Settings & Privacy</p>
                 </a>
                 <a class="sub-menu-link" >
-                    <p><i class="fa fa-solid fa-hand-holding-hand"></i> Help & Support</p>
+                    <p (click)="openHelpSupport()"><i class="fa fa-solid fa-hand-holding-hand"></i> Help & Support</p>
                 </a>
                 <a class="sub-menu-link" (click)="logOut()">
                     <p id="logout"><i class="fa fa-sign-out-alt"></i> LogOut</p>
@@ -154,10 +179,10 @@
       <span class="close" (click)="closeEditProfilePopUp()">&times;</span>
       <div style="margin-top: 40px;">
         <h3 style="text-align: center;">
-            <span style="color: red;">{{this.userObj.firstName}} {{this.userObj.lastName}}</span> Profile
+            <i class="fa fa-user-pen"></i><span style="color: red;">  {{this.userObj.firstName}} {{this.userObj.lastName}}</span>
         </h3>
         <div class="editContainer">
-            <div style="width:50%;display:flex;justify-content: center;align-items: center;">
+            <div class="ChangeProfileContainer">
                 <div class="container1">
                     <div class="div1">
                         <div class="hidden-element upload-div" id="uploadDiv" style="margin:70px 0 0 0;">
@@ -171,10 +196,87 @@
                     </div>
                 </div>
             </div>
-            <div style="width:50%;">
-                hii
+            <div class="ChangeUserContainer">
+                <div class="grid-container">
+                    <div>
+                        <label for="firstName">First Name:</label>
+                        <input type="text" id="firstName" name="firstName" [(ngModel)]="userObjEdit.firstName">
+                    </div>
+                    <div>
+                        <label for="lastName">Last Name:</label>
+                        <input type="text" id="lastName" name="lastName" [(ngModel)]="userObjEdit.lastName">
+                    </div>
+                </div>
+                <div class="grid-container">
+                    <div>
+                        <label for="userId">Used Id:</label>
+                        <input type="text" id="userId" [(ngModel)]="userObjEdit.userId" disabled>
+                    </div>
+                    <div>
+                        <label for="doj">Date Of Join:</label>
+                        <input type="text" id="doj" [(ngModel)]="userObjEdit.dateOfJoin" disabled>
+                    </div>
+                </div>
+                <div class="grid-container">
+                    <div>
+                        <label for="email">Email:</label>
+                        <input type="text" id="email" [(ngModel)]="userObjEdit.email" disabled>
+                    </div>
+                    <div>
+                        <label for="passwordd">Password:</label>
+                        <input type="text" id="passwordd" [(ngModel)]="userObjEdit.password" disabled>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content: center;align-items: center;padding-top: 10px;">
+                    <button (click)="saveUserInfoChanges()" style="padding:5px;"><i class="fa fa-save"></i>Save</button>
+                </div>
             </div>
-            
+        </div>
+      </div>
+    </div>
+</div>
+
+<div id="accountSettings" class="modal">
+    <div class="modal-content">
+      <span class="close" (click)="closeAccountSettingsPopup()">&times;</span>
+      <div style="margin-top: 40px;">
+        <h3 style="text-align: center;"><i class="fa fa-gear"></i> Settings & Privacy</h3>
+        <h4 style="text-align: center;color:red;">Secure your account by choosing a strong password.</h4>
+        <h6 style="text-align: center;color:green;">Account security safeguards your data through strong authentication, encryption, and regular monitoring to prevent unauthorized access.</h6>
+        <div style="display:flex;flex-direction:column;align-items: center;">
+            <div style="width:300px;">
+                <label for="email">Email:</label>
+                <input type="text" id="email" name="email"  [(ngModel)]="userObjEdit.email" disabled>
+
+                <label for="password">New Password:&emsp;<i class="fas fa-eye" [style.color]="showPassColor?'blue':''"
+                    (click)="showPassword()" title="Show Password !"></i></label>
+                <input type="password" id="password" name="password" [(ngModel)]="password" #showPass>
+                <p *ngIf="!verifyPassword()" style="color:red;font-size: 13px;">9-15 chars, 1 uppercase, lowercase, number,
+                    and special char</p>
+
+                <label for="confirmPassword">Confirm New Password:&emsp;<i class="fas fa-eye"
+                        [style.color]="showConfPassColor?'blue':''" (click)="showConfirmPassword()"
+                        title="Show Confirm Password !"></i></label>
+                <input type="password" id="confirmPassword" name="confirmPassword" [(ngModel)]="confirmPassword"
+                    #showConfPass>
+                <p *ngIf="!verifyConfirmPassword()" style="color:red;font-size: 13px;">9-15 chars, 1 uppercase, lowercase,
+                    number, and special char.</p>
+            </div>
+            <div style="display:flex;justify-content: center;align-items: center;padding-top: 10px;">
+                <button (click)="changePassword()" style="padding:5px;"><i class="fa fa-save"></i>Save</button>
+            </div>
+        </div>
+      </div>
+    </div>
+</div>
+
+<div id="helpSupport" class="modal">
+    <div class="modal-content">
+      <span class="close" (click)="closeHelpSupport()">&times;</span>
+      <div style="margin-top: 40px;">
+        <h3 style="text-align: center;"><i class="fa fa-solid fa-hand-holding-hand"></i> Help & Support</h3>
+        <div class="editContainer">
+            Help & Support
         </div>
       </div>
     </div>
@@ -195,3 +297,28 @@
         </div>
     </div>
 </div>
+
+<div id="viewResume" class="modal">
+    <div class="modal-content">
+      <span class="close" (click)="closeResume()">&times;</span>
+        <h3 style="text-align: center;"><i class="fa-solid fa-file-alt"></i> Resume Analysis</h3>
+        <div>
+            <div class="grid-container" style="align-items: center;">
+                <button class="tablink" 
+                    (click)="openPage('One')" [ngStyle]="{'background-color': activeTab === 'One' ? '#122853' : ''}">
+                Resume</button>
+                <button class="tablink" 
+                    (click)="openPage('Two')" [ngStyle]="{'background-color': activeTab === 'Two' ? '#122853' : ''}">
+                Analysis</button>
+            </div>
+            <div *ngIf="activeTab === 'One'" id="One" class="tabcontent">
+                <iframe [src]="safeUrl" width="100%" height="600px"></iframe>
+            </div>
+            <div *ngIf="activeTab === 'Two'" id="Two" class="tabcontent">
+                <div [innerHTML]="selectedResume.answer.toString() | safeHtml"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<app-loading-gif *ngIf="loadingFlag"></app-loading-gif>

@@ -7,6 +7,7 @@ import { filter, map, Observable } from 'rxjs';
 import { ImageChatHistory } from '../Model/image-chat-history';
 import { ImageAnalysisTransaction } from '../Model/image-analysis-transaction';
 import { TranslationTransaction } from '../Model/translation-transaction';
+import { ResumeAnalysisTransaction } from '../Model/resume-analysis-transaction';
 
 @Injectable({
   providedIn: 'root'
@@ -27,6 +28,10 @@ export class HttpService {
 
   userLogin(email : String, password : String){
     return this._httpClient.get<ResponseObj>(this.host+"/loginUser?email="+email+"&password="+password);
+  }
+
+  updateUserInfo(user : User){
+    return this._httpClient.post<ResponseObj>(this.host+"/updateUser",user);
   }
 
   uploadUserProfile(userId:String,file : File):any{
@@ -79,6 +84,16 @@ export class HttpService {
 
   getTranslate(userId:String){
     return this._httpClient.get<{[date: string]: TranslationTransaction[]}>(this.host+"/getUserTranslations?userId="+userId);
+  }
+ 
+  resumeAnalyzer(userId:String,role:String,file : File):any{
+    const formData = new FormData();
+    formData.append('file',file);
+    return this._httpClient.post(this.host+"/resumeAnalyzer?userId="+userId+"&role="+role,formData, {responseType : 'text'});
+  }
+
+  getResumeAnalysisHistory(email : String, password : String):Observable<{[date: string]: ResumeAnalysisTransaction[]}>{
+    return this._httpClient.get<{[date: string]: ResumeAnalysisTransaction[]}>(this.host+"/getResumeAnalysisHistory?email="+email+"&password="+password);
   }
 
 }

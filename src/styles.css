@@ -75,7 +75,7 @@ ul{
     display: grid;
     grid-template-columns: 1fr 1fr;
     align-items: flex-start;
-    margin-top: auto;
+    margin-top: 2%;
 }
 .hero-img{
     display: flex;

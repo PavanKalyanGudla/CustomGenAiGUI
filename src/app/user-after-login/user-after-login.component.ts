@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, NgIterable, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, HostListener, NgIterable, ViewChild } from '@angular/core';
 import { User } from '../Model/user';
 import { Router } from '@angular/router';
 import { HttpService } from '../Services/http-service.service';
@@ -8,6 +8,9 @@ import { ImageAnalysisTransaction } from '../Model/image-analysis-transaction';
 import { LanguageList } from '../Model/language-list';
 import { TranslationTransaction } from '../Model/translation-transaction';
 import { Observable, of, switchMap, tap } from 'rxjs';
+import { ResumeAnalysisTransaction } from '../Model/resume-analysis-transaction';
+import { ResponseObj } from '../Model/response-obj';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-user-after-login',
@@ -17,10 +20,14 @@ import { Observable, of, switchMap, tap } from 'rxjs';
 export class UserAfterLoginComponent {
 
   userObj : User = new User();
+  userObjEdit : User = new User();
   public editProfile : any;
-  // public displayTrans : any;
+  public accountSettings : any;
+  public helpSupport : any;
+  public viewResume : any;
   selectedFile: File | null = null;
   analysisFile: File | null = null;
+  resumeFile: File | null = null;
   profileFlag:boolean=false;
   profilePicSrc: string | ArrayBuffer | undefined;
   imageAnalysisSrc: ArrayBuffer | undefined;
@@ -33,33 +40,39 @@ export class UserAfterLoginComponent {
   transactionList: Array<{ question: String, image?:String, answer: any }> = [];
   messageList: Array<{ question: String, answer: any }> = [];
   imageAnalysisList: Array<{ question: String, image:String, answer: any }> = [];
+  resumeAnalysisList : Array<{ question: String, fileName: String, roleType:String, answer: any }> = [];
   imageList: Array<{ question: String, answer: any }> = [];
   translatorList: Array<{ question: String, answer: any }> = [];
-  transactionsMap: { [date: string]: ChatTransaction[] | ImageChatHistory[] | ImageAnalysisTransaction[] | TranslationTransaction[]} = {};
+  transactionsMap: { [date: string]: ChatTransaction[] | ImageChatHistory[] | ImageAnalysisTransaction[] | TranslationTransaction[] | ResumeAnalysisTransaction[]} = {};
   chatTransactionsMap: { [date: string]: ChatTransaction[] } = {};
   imageChatTransactionsMap: { [date: string]: ImageChatHistory[] } = {};
   imageAnalysisTransactionsMap: { [date: string]: ImageAnalysisTransaction[] } = {};
+  resumeAnalysisTransactionsMap: { [date: string]: ResumeAnalysisTransaction[] } = {};
   translationTransactionMap : {[date: string]: TranslationTransaction[]} = {};
   selectedService:String="gptbot";
-  sidebarOpen: boolean = false;
+  resumeAnaFlag:boolean = false;
   languageList = new LanguageList();
   paragraph:String="Generative AI is transforming the way we interact with technology, from creating text and art to answering complex questions. Explore the limitless potential of AI-driven innovation and creativity!";
  
   @ViewChild('uploadInput') uploadInput!: ElementRef;
+  @ViewChild('sendButton', { static: false }) sendButton!: ElementRef;
 
   constructor(private _router : Router, 
     private _httpService : HttpService,
-    private cdr: ChangeDetectorRef
-  ){
-  }
+    private cdr: ChangeDetectorRef,
+    private sanitizer: DomSanitizer
+  ){}
 
   ngOnInit(){
     let userObjStr = localStorage.getItem("userObjectData");
     this.sidebar = document.getElementById('left');
     if(userObjStr != null){
       this.userObj = JSON.parse(userObjStr);
+      this.userObjEdit = JSON.parse(userObjStr);
       this.editProfile = document.getElementById("editProfile");
-      // this.displayTrans = document.getElementById("displayTrans");
+      this.accountSettings = document.getElementById("accountSettings");
+      this.helpSupport = document.getElementById("helpSupport");
+      this.viewResume = document.getElementById("viewResume");
       this.transactionsMap={};
       this.transactionList=[];
       this.getProfilePic();
@@ -67,6 +80,7 @@ export class UserAfterLoginComponent {
       this.getImageChatHistory();
       this.getImageAnalysisHistory();
       this.getTranslate();
+      this.getResumeAnalysisHistory();
     }
     const fileInput = document.getElementById('fileInput');
     if(fileInput){
@@ -90,6 +104,15 @@ export class UserAfterLoginComponent {
       console.error('File image element is null');
     }
   }
+
+  @HostListener('document:keydown', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.sendButton.nativeElement.click();
+    }
+  }
+  
   uploadImage(){
     if (this.uploadInput) {
       this.uploadInput.nativeElement.click();
@@ -108,29 +131,45 @@ export class UserAfterLoginComponent {
     }
   }
   
-  openSettings(){
-    this.userSettingsFlag = "block";
-  }
-
-  closeSettingsPopup(){
-    this.userSettingsFlag = "none";
-  }
-
   logOut(){
     localStorage.clear();
     this._router.navigate([""]);
   }
 
-  editProfilePopUp(){
-    if(this.editProfile != null){
-      this.editProfile.style.display = "block";
-    }
+  openSettings(){
+    this.userSettingsFlag = "block";
   }
 
-  closeEditProfilePopUp(){
-    if(this.editProfile != null){
-      this.editProfile.style.display = "none";
-    }
+  closeSettingsPopup(){ 
+    this.userSettingsFlag = "none"; 
+  }
+
+  editProfilePopUp(){
+    (this.editProfile != null)?this.editProfile.style.display = "block":"";
+    this.userObjEdit = JSON.parse(localStorage.getItem("userObjectData")+"");
+  }
+
+  closeEditProfilePopUp(){ 
+    (this.editProfile != null)? this.editProfile.style.display = "none":""; 
+  }
+
+  openAccountSettingsPopup(){
+    (this.accountSettings != null)? this.accountSettings.style.display = "block" : "";
+    this.userObjEdit = JSON.parse(localStorage.getItem("userObjectData")+"");
+    this.password = "";
+    this.confirmPassword = "";
+  }
+
+  closeAccountSettingsPopup(){ 
+    (this.accountSettings != null)?this.accountSettings.style.display = "none":""; 
+  }
+
+  openHelpSupport(){ 
+    (this.helpSupport != null)?this.helpSupport.style.display = "block" : ""; 
+  }
+
+  closeHelpSupport(){ 
+    (this.helpSupport != null)?this.helpSupport.style.display = "none" : ""; 
   }
 
   compressProfilePic() {
@@ -216,16 +255,20 @@ export class UserAfterLoginComponent {
       reader.readAsDataURL(new Blob([data]));
     })
   }
-
+  
   getResponse(){
     if(this.inputMsg1!="" && this.inputMsg1!=" " &&this.inputMsg1.trim()!=""){
       if(this.selectedService=='gptbot'){
+        this.loadingFlag = true;
         this._httpService.chatGptApi(this.userObj,this.inputMsg1).subscribe((data:any) =>{
           let text = data;
           this.messageList.push({ question: this.inputMsg1, answer: text});
+          this.loadingFlag = false;
+          this.inputMsg1=""
           this.getChatHistory();
         })
       }else if(this.selectedService=="imagegenerate"){
+        this.loadingFlag = true;
         this._httpService.imageChatGptApi(this.userObj,this.inputMsg1).subscribe((data:ArrayBuffer) => {
           let blob = new Blob([data], { type: 'image/jpeg' });
           const reader = new FileReader();
@@ -234,24 +277,30 @@ export class UserAfterLoginComponent {
             let image = reader.result;
             this.imageList.push({ question: this.inputMsg1, answer: image });
           };
+          this.inputMsg1=""
+          this.loadingFlag = false;
           this.getImageChatHistory();
         })
       }else if(this.selectedService=="imageanalysis"){
         if(this.analysisFile){
-          this._httpService.imageAnalysisApi(this.userObj.userId,this.inputMsg1,this.analysisFile).subscribe((data: any) =>{
-            const reader = new FileReader();
-            reader.onload = (e) => {
-              const arrayBuffer = reader.result as ArrayBuffer;
-              this.imageAnalysisSrc = arrayBuffer;
-            };
+          this.loadingFlag = true;
+          this._httpService.imageAnalysisApi(this.userObj.userId, this.inputMsg1, this.analysisFile).pipe(
+            switchMap((data: any) => {
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                const arrayBuffer = reader.result as ArrayBuffer;
+                this.imageAnalysisSrc = arrayBuffer;
+              };
+              this.inputMsg1 = "";
+              this.loadingFlag = false;
+              return this.getImageAnalysisHistory1();
+            })
+          ).subscribe(() => {
+            this.transactionsMap = this.imageAnalysisTransactionsMap;
+            this.transactionList = this.imageAnalysisList;
           });
         }
-      }else if(this.selectedService=="translate"){
-        
-      }else if(this.selectedService=="resume"){
-        
       }
-      
     }
   }
 
@@ -281,6 +330,15 @@ export class UserAfterLoginComponent {
     })
   }
 
+  getImageAnalysisHistory1(): Observable<{ [date: string]: ImageAnalysisTransaction[]; }> {
+    return this._httpService.getImageAnalysisHistory(this.userObj.email, this.userObj.password).pipe(
+      tap((data) => {
+        this.imageAnalysisTransactionsMap = data;
+        this.addTodaysImageAnalysisTransactionsToMessageList(this.getFormattedDate());
+      })
+    );
+  }  
+
   compareFn = (a: any, b: any): number => {
     const dateA = new Date(a.key).getTime();
     const dateB = new Date(b.key).getTime();
@@ -307,6 +365,7 @@ export class UserAfterLoginComponent {
       this.transactionsMap = this.translationTransactionMap
     }else if(this.selectedService=="resume"){
       this.heading = "Elevate Your Hiring Process with Gen AI";
+      this.transactionsMap = this.resumeAnalysisTransactionsMap;
     }
     this.infoFlag=(this.transactionList.length != 0)?true:false;
   }
@@ -327,7 +386,6 @@ export class UserAfterLoginComponent {
       this.transactionList = this.imageAnalysisList;
     }else if(this.selectedService=="translate"){
       this.addTodaysTranslationTransactionsToMessageList(e);
-      // this.transactionList = this.translatorList;
       this.openDisplayTransPopUp();
     }else if(this.selectedService=="resume"){
     }
@@ -341,6 +399,7 @@ export class UserAfterLoginComponent {
     const dd = String(today.getDate()).padStart(2, '0');
     return `${yyyy}-${mm}-${dd}`;
   }
+
   addTodaysChatTransactionsToMessageList(date : any) {
     const today = date;
     if (this.chatTransactionsMap.hasOwnProperty(today)) {
@@ -360,8 +419,13 @@ export class UserAfterLoginComponent {
     }
   }
 
-  leftContainerEvent(){
-    this.sidebarOpen = !this.sidebarOpen;
+  leftContainerEvent() {
+    const sidebar = document.getElementById("left") as HTMLElement | null;
+    if (sidebar?.classList.contains("open")) {
+        sidebar.classList.remove("open");
+    } else {
+        sidebar?.classList.add("open");
+    }
   }
 
   addTodaysImageChatTransactionsToMessageList(date : any) {
@@ -415,21 +479,6 @@ export class UserAfterLoginComponent {
     }
   }
 
-  // translate(){
-  //   if(""==this.sourceLang||""==this.targetLang||""==this.sourceText.trim()){
-  //     alert("Please Check Source/Target Language selection Or Source Text field Empty");
-  //   }else{
-  //     this._httpService.translate(this.sourceText,this.sourceLang,this.targetLang,this.userObj.userId).subscribe((data:String)=>{
-  //       this.targetText = data;
-  //       if(data){
-  //         this.getTranslate();
-  //         this.transactionsMap = this.translationTransactionMap;
-  //         console.log(this.transactionsMap);
-  //       }
-  //     })
-  //   }
-  // }
-
   translate() {
     if ("" == this.sourceLang || "" == this.targetLang || "" == this.sourceText.trim()) {
       alert("Please Check Source/Target Language selection Or Source Text field Empty");
@@ -456,7 +505,6 @@ export class UserAfterLoginComponent {
   getTranslate(){
     this._httpService.getTranslate(this.userObj.userId).subscribe((data) =>{
       this.translationTransactionMap = data;
-      console.log(this.translationTransactionMap);
     });
   }
 
@@ -494,6 +542,210 @@ export class UserAfterLoginComponent {
   closeDisplayTransPopUp(){
     this.displayTransFlag="none";
   }
+
+  resumeAnalyResp : string = "";
+  resumeRole : String = "";
+  loadingFlag : boolean = false;
+
+  uploadResume(){
+    if(this.resumeFile){
+      if(""!=this.resumeRole.trim()){
+        this.loadingFlag = true;
+        this._httpService.resumeAnalyzer(this.userObj.userId,this.resumeRole,this.resumeFile).pipe(
+          switchMap((data: any) => {
+            this.resumeAnalyResp=data;
+            this.resumeAnaFlag = true;
+            this.loadingFlag = false;
+            return this.getResumeAnalysisHistory1();
+          })
+        ).subscribe(() => {
+          this.transactionsMap = this.resumeAnalysisTransactionsMap;
+        });
+      }else{
+        alert("Missing to add your Job Role Description");
+        this.loadingFlag = false;
+      }
+    }
+  }
+
+  getResumeAnalysisHistory(){
+    this._httpService.getResumeAnalysisHistory(this.userObj.email,this.userObj.password).subscribe((data) =>{
+      this.resumeAnalysisTransactionsMap=data;
+      this.addTodaysResumeAnalysisTransactionsToMessageList(this.getFormattedDate());
+    })
+  }
+
+  getResumeAnalysisHistory1(): Observable<{ [date: string]: ResumeAnalysisTransaction[] }> {
+    return this._httpService.getResumeAnalysisHistory(this.userObj.email, this.userObj.password).pipe(
+      tap((data) => {
+        this.resumeAnalysisTransactionsMap = data;
+        this.addTodaysResumeAnalysisTransactionsToMessageList(this.getFormattedDate());
+      })
+    );
+  }
+
+  addTodaysResumeAnalysisTransactionsToMessageList(date : any) {
+    const today = date;
+    if (this.resumeAnalysisTransactionsMap.hasOwnProperty(today)) {
+      this.resumeAnalysisList=[];
+      this.resumeAnalysisTransactionsMap[today].forEach(transaction => {
+        this.resumeAnalysisList.push({
+          question: transaction.fileName,
+          fileName: transaction.fileName,
+          roleType: transaction.roleType,
+          answer: transaction.answer
+        });
+      });
+      this.cdr.detectChanges();
+    }
+  }
+
+  resetResume(resumeFileId: HTMLInputElement){
+    this.resumeAnalyResp = "";
+    this.resumeRole = "";
+    this.resumeAnaFlag = false;
+    resumeFileId.value = '';
+  }
+
+  selectResume(event: Event){
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.resumeFile = input.files[0];
+    }
+  }
+
+  saveUserInfoChanges(){
+    this._httpService.updateUserInfo(this.userObjEdit).subscribe((data) =>{
+      let response : ResponseObj = data;
+      alert(response.responseMsg)
+      if(response.responseCode == "200"){
+        this.userObj = response.responseModel;
+        localStorage.setItem("userObjectData",JSON.stringify(this.userObj));
+        let userObjString:any = localStorage.getItem("userObjectData");
+        this.userObjEdit = JSON.parse(userObjString);
+      }
+    })
+  }
+
+  password: String = "";
+  confirmPassword: String = "";
+  showPassColor:boolean=false;
+  showConfPassColor:boolean=false;
+  @ViewChild('showPass') showPass: any;
+  @ViewChild('showConfPass') showConfPass: any;
+  showPassword(){
+    if(this.showPass.nativeElement.type=='password'){
+      this.showPass.nativeElement.type='text';
+      this.showPassColor=true;
+    }else if(this.showPass.nativeElement.type=='text'){
+      this.showPass.nativeElement.type='password';
+      this.showPassColor=false;
+    }
+  }
+
+  showConfirmPassword(){
+    if(this.showConfPass.nativeElement.type=='password'){
+      this.showConfPass.nativeElement.type='text';
+      this.showConfPassColor=true;
+    }else if(this.showConfPass.nativeElement.type=='text'){
+      this.showConfPass.nativeElement.type='password';
+      this.showConfPassColor=false;
+    }
+  }
+
+  verifyPassword(): boolean {
+    let password : string= this.password as string;
+    if(password === "")
+      return true;
+    const minLength = /.{9,15}/;
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/;
+    const hasUpperCase = /[A-Z]/;
+    const hasLowerCase = /[a-z]/;
+    const hasNumber = /\d/;
+    const meetsLength = minLength.test(password);
+    const hasSpecial = hasSpecialChar.test(password);
+    const hasUpper = hasUpperCase.test(password);
+    const hasLower = hasLowerCase.test(password);
+    const hasNum = hasNumber.test(password);
+    return meetsLength && hasSpecial && hasUpper && hasLower && hasNum;
+  }
+
+  verifyConfirmPassword(): boolean{
+    let password : string= this.confirmPassword as string;
+    if(password === "")
+      return true;
+    const minLength = /.{9,15}/;
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/;
+    const hasUpperCase = /[A-Z]/;
+    const hasLowerCase = /[a-z]/;
+    const hasNumber = /\d/;
+    const meetsLength = minLength.test(password);
+    const hasSpecial = hasSpecialChar.test(password);
+    const hasUpper = hasUpperCase.test(password);
+    const hasLower = hasLowerCase.test(password);
+    const hasNum = hasNumber.test(password);
+    return meetsLength && hasSpecial && hasUpper && hasLower && hasNum;
+  }
+
+  changePassword(){
+    this.userObjEdit = JSON.parse(localStorage.getItem("userObjectData")+"");
+    if(this.password == this.confirmPassword){
+      this.userObjEdit.password = this.password;
+      this._httpService.updateUserInfo(this.userObjEdit).subscribe((data) =>{
+        let response : ResponseObj = data;
+        if(response.responseCode == "200"){
+          alert("Password Changed Successfully");
+          this.userObj = response.responseModel;
+          localStorage.setItem("userObjectData",JSON.stringify(this.userObj));
+          let userObjString:any = localStorage.getItem("userObjectData");
+          this.userObjEdit = JSON.parse(userObjString);
+        }else{
+          alert("Failed To Update Password");
+        }
+      })
+    }else{
+      alert("Confirm Password Mis matched");
+    }
+  }
+  activeTab: string = 'One';
+  selectedResume : ResumeAnalysisTransaction = new ResumeAnalysisTransaction();
+  fileUrl: string | undefined;
+  safeUrl: SafeResourceUrl | undefined;
+
+  openResume(obj : ResumeAnalysisTransaction){
+    (this.viewResume != null)?this.viewResume.style.display = "block":"";
+    this.selectedResume = obj;
+    console.log(this.selectedResume);
+    this.convertToBlob(this.selectedResume.resumeFile);
+    this.openPage(this.activeTab);
+  }
+
+  convertToBlob(base64String: string) {
+    const byteCharacters = atob(base64String);
+    const byteArrays = [];
+    for (let offset = 0; offset < byteCharacters.length; offset++) {
+      const byte = byteCharacters.charCodeAt(offset);
+      byteArrays.push(byte);
+    }
+    const byteArray = new Uint8Array(byteArrays);
+    const blob = new Blob([byteArray], { type: 'application/pdf' });
+    const blobURL = URL.createObjectURL(blob);
+    this.safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(blobURL);
+  }
+
+  openPage(pageName: string): void {
+    this.activeTab = pageName;
+  }
+
+  closeResume(){
+    (this.viewResume != null)?this.viewResume.style.display = "none":"";
+  }
+
+  ngOnDestroy() {
+    if (this.fileUrl) {
+      URL.revokeObjectURL(this.fileUrl);
+    }
+  }
 }
 
-type PossibleTransactionArray = ChatTransaction[] | ImageChatHistory[] | ImageAnalysisTransaction[] | TranslationTransaction[];
+type PossibleTransactionArray = ChatTransaction[] | ImageChatHistory[] | ImageAnalysisTransaction[] | TranslationTransaction[] | ResumeAnalysisTransaction[];
