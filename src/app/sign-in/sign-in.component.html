@@ -20,6 +20,7 @@
             <span class="psw" (click)="forgotPassword()">Forgot <a>password?</a></span>
         </div>
     </div>
+    <app-loading-gif *ngIf="loadingFlag"></app-loading-gif>
 </div>
 <div class="container" *ngIf=forgotpasswordFlag>
     <div class="row">

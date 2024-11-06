@@ -10,6 +10,8 @@ import { SignInComponent } from './sign-in/sign-in.component';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { UserAfterLoginComponent } from './user-after-login/user-after-login.component';
+import { LoadingGifComponent } from './loading-gif/loading-gif.component';
+import { SafeHtmlPipePipe } from './Pipes/safe-html-pipe.pipe';
 
 @NgModule({
   declarations: [
@@ -18,7 +20,9 @@ import { UserAfterLoginComponent } from './user-after-login/user-after-login.com
     HomeComponent,
     SignUpComponent,
     SignInComponent,
-    UserAfterLoginComponent
+    UserAfterLoginComponent,
+    LoadingGifComponent,
+    SafeHtmlPipePipe
   ],
   imports: [
     BrowserModule,

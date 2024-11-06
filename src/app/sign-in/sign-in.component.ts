@@ -12,6 +12,7 @@ import { Router } from '@angular/router';
 export class SignInComponent {
 
   forgotpasswordFlag : boolean= false;
+  loadingFlag : boolean = false;
   email:String="";
   email1:String="";
   password:String="";
@@ -42,8 +43,11 @@ export class SignInComponent {
   signIn(){
     if(this.email != null && this.email != undefined && this.email != ""){
       if(this.password != null && this.password != undefined && this.password != ""){
+        this.loadingFlag = true;
         this._httpService.userLogin(this.email,this.password).subscribe((data:ResponseObj)=>{
           if(data.responseCode == "200" && data.responseMsg=="SUCCESS"){
+            this.email="";
+            this.password="";
             this.userObj = data.responseModel;
             localStorage.setItem("userObjectData",JSON.stringify(this.userObj));
             if(null != localStorage.getItem("userObjectData")){
@@ -52,9 +56,8 @@ export class SignInComponent {
           }else{
             alert("User Not Exists");
           }
+          this.loadingFlag = false;
         })
-        this.email="";
-        this.password="";
       }else{
         alert("Please Check Password");
       }
