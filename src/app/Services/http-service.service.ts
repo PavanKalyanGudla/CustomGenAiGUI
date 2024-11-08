@@ -8,13 +8,17 @@ import { ImageChatHistory } from '../Model/image-chat-history';
 import { ImageAnalysisTransaction } from '../Model/image-analysis-transaction';
 import { TranslationTransaction } from '../Model/translation-transaction';
 import { ResumeAnalysisTransaction } from '../Model/resume-analysis-transaction';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class HttpService {
 
-  private host : string = "http://localhost:8080";
+  // private host : string = "http://localhost:8080";
+  // private host : string = "http://ec2-18-117-143-57.us-east-2.compute.amazonaws.com:8080";
+
+  private host : string = environment.apiUrl;
 
   constructor(private _httpClient : HttpClient) { }
 

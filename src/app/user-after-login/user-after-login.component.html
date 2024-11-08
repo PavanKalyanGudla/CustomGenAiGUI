@@ -127,9 +127,25 @@
                             </div>
                     </div>
                 </div>
+                <!-- <div class="bottom-div">
+                    <div class="search-layout" *ngIf="selectedService != 'translate' && selectedService != 'resume'">
+                        <div style="background-color:pink;">
+                            <form action="#" class="search-bar">
+                                <i class="fa-solid fa-paperclip" (click)="uploadImage()"style="cursor:pointer;" *ngIf="selectedService == 'imageanalysis'"></i>
+                                <input type="file" #uploadInput (change)="onFileSelected($event)" accept=".jpg, .jpeg, .png" style="display:none;" />
+                                <input type="text" name="chat" placeholder="Message for get Clarified" [(ngModel)]="inputMsg1" autocomplete="off">
+                                <button type="submit" (click)="getResponse()" #sendButton>
+                                    <i class="fas fa-paper-plane" id="sendMsg"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div> -->
+            </div>
+            <div class="fixed-bottom" style="background-color: blue;">
                 <div class="bottom-div">
                     <div class="search-layout" *ngIf="selectedService != 'translate' && selectedService != 'resume'">
-                        <div >
+                        <div>
                             <form action="#" class="search-bar">
                                 <i class="fa-solid fa-paperclip" (click)="uploadImage()"style="cursor:pointer;" *ngIf="selectedService == 'imageanalysis'"></i>
                                 <input type="file" #uploadInput (change)="onFileSelected($event)" accept=".jpg, .jpeg, .png" style="display:none;" />
@@ -275,9 +291,7 @@
       <span class="close" (click)="closeHelpSupport()">&times;</span>
       <div style="margin-top: 40px;">
         <h3 style="text-align: center;"><i class="fa fa-solid fa-hand-holding-hand"></i> Help & Support</h3>
-        <div class="editContainer">
-            Help & Support
-        </div>
+            <app-help-and-support></app-help-and-support>
       </div>
     </div>
 </div>

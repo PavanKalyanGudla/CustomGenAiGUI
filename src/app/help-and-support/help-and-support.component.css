@@ -1,0 +1,108 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: Arial, sans-serif;
+}
+.support-container {
+    width: 90%;
+    margin: 0 auto;
+    padding: 20px 0;
+}
+h2,h3 {
+    text-align: center;
+    font-size: 2em;
+    margin-bottom: 20px;
+}
+#help-support {
+    background-color: #f9f9f9;
+    padding: 40px 0;
+}
+.support-cards {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+.card {
+    background-color: #fff;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 30%;
+    text-align: center;
+    border-radius: 8px;
+}
+.card h3 {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+}
+.card p {
+    font-size: 1em;
+    margin-bottom: 20px;
+}
+.card a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+}
+.card a:hover {
+    text-decoration: underline;
+}
+.donation-section {
+    margin-top: 40px;
+    /* background-color: #f2f9fc; */
+    padding: 30px 0;
+}
+.donation-cards {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+.donation-card {
+    background-color: #fff;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 30%;
+    text-align: center;
+    border-radius: 8px;
+}
+.donation-card h4 {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+}
+.donation-card p {
+    font-size: 1em;
+    margin-bottom: 20px;
+}
+.donation-card a {
+    color: #28a745;
+    text-decoration: none;
+    font-weight: bold;
+}
+.donation-card a:hover {
+    text-decoration: underline;
+}
+@media (max-width: 768px) {
+    .support-cards,.donation-cards {
+        flex-direction: column;
+        align-items: center;
+    }
+    .card,.donation-card {
+        width: 80%;
+        margin-bottom: 20px;
+    }
+}
+@media (max-width: 480px) {
+    .card h3,.donation-card h4 {
+        font-size: 1.2em;
+    }
+    .card p,.donation-card p {
+        font-size: 0.9em;
+    }
+    .card a,.donation-card a {
+        font-size: 0.9em;
+    }
+}

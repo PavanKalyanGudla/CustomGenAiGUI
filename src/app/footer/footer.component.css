@@ -4,6 +4,8 @@ footer{
     color:white;
 }
 .footer-container{
+    display:flex;
+    flex-direction: row;
     max-width: 1200px;
     width: 90%;
     margin: 0px auto;
@@ -91,4 +93,9 @@ footer{
 .footer-bottom span{
     color:white;
     font-size: 0.9rem;
+}
+@media(max-width:1050px){
+    .footer-container{
+        flex-direction: column;
+    }
 }
