@@ -12,6 +12,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { UserAfterLoginComponent } from './user-after-login/user-after-login.component';
 import { LoadingGifComponent } from './loading-gif/loading-gif.component';
 import { SafeHtmlPipePipe } from './Pipes/safe-html-pipe.pipe';
+import { HelpAndSupportComponent } from './help-and-support/help-and-support.component';
 
 @NgModule({
   declarations: [
@@ -22,7 +23,8 @@ import { SafeHtmlPipePipe } from './Pipes/safe-html-pipe.pipe';
     SignInComponent,
     UserAfterLoginComponent,
     LoadingGifComponent,
-    SafeHtmlPipePipe
+    SafeHtmlPipePipe,
+    HelpAndSupportComponent
   ],
   imports: [
     BrowserModule,
