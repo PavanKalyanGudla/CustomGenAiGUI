@@ -100,4 +100,8 @@ export class HttpService {
     return this._httpClient.get<{[date: string]: ResumeAnalysisTransaction[]}>(this.host+"/getResumeAnalysisHistory?email="+email+"&password="+password);
   }
 
+  getFluxResponse(text:String):any{
+    return this._httpClient.get(this.host+"/stream?message="+text);
+  }
+
 }

@@ -2,8 +2,9 @@
     <nav class="navigation" style="border-bottom:1px solid #122853;">
          <img width="60px" src="../../assets/logo.png">
         <input type="checkbox" class="menu-btn" id="menu-btn">
-        <label for="menu-btn" class="menu-icon" style="font-size: 25px;">
-            <i class="fa-solid fa-bars"></i>
+        <label for="menu-btn" class="menu-icon" style="font-size: 25px;" (click)="openMenu()">
+            <i class="fa-solid fa-bars" *ngIf="logoFlag"></i>
+            <i class="fa-solid fa-times" *ngIf="!logoFlag"></i>
         </label>
         <ul class="menu">
             <li><a href="" style="color:red;">Home</a></li>
@@ -125,7 +126,7 @@
     </div>
 </section>
 
-<section id="our-services1">
+<section id="our-services">
     <div class="services-heading">
         <div class="services-heading-text">
             <strong>User Experience Services</strong>

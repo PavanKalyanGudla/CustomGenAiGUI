@@ -15,8 +15,11 @@
          </div>
     </nav>
     <main class="body-container">
-        <button class="toggle-button" (click)="leftContainerEvent()">☰</button>
-        <aside id="left" class="flex-item" style="overflow-y: scroll;">
+        <button class="toggle-button" (click)="leftContainerEvent()">
+            <span *ngIf="logoFlag">☰</span>
+            <span *ngIf="!logoFlag">X</span>
+        </button>
+        <aside id="left1" class="flex-item" style="overflow-y: scroll;" [class.active]="isSidebarActive">
             <div class="leftContainer">
                 <div class="leftContainerItem" *ngFor="let i of (transactionsMap | keyvalue : compareFn)" (click)="loadTransaction(i.key)">
                     <p style="font-size: small;color:blueviolet">{{i.key}}</p>
@@ -127,22 +130,8 @@
                             </div>
                     </div>
                 </div>
-                <!-- <div class="bottom-div">
-                    <div class="search-layout" *ngIf="selectedService != 'translate' && selectedService != 'resume'">
-                        <div style="background-color:pink;">
-                            <form action="#" class="search-bar">
-                                <i class="fa-solid fa-paperclip" (click)="uploadImage()"style="cursor:pointer;" *ngIf="selectedService == 'imageanalysis'"></i>
-                                <input type="file" #uploadInput (change)="onFileSelected($event)" accept=".jpg, .jpeg, .png" style="display:none;" />
-                                <input type="text" name="chat" placeholder="Message for get Clarified" [(ngModel)]="inputMsg1" autocomplete="off">
-                                <button type="submit" (click)="getResponse()" #sendButton>
-                                    <i class="fas fa-paper-plane" id="sendMsg"></i>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div> -->
             </div>
-            <div class="fixed-bottom" style="background-color: blue;">
+            <div class="fixed-bottom">
                 <div class="bottom-div">
                     <div class="search-layout" *ngIf="selectedService != 'translate' && selectedService != 'resume'">
                         <div>

@@ -63,7 +63,7 @@
       border: none;
       padding: 10px;
       cursor: pointer;
-      z-index: 500;
+      /* z-index: 500; */
       border-top-right-radius: 50%;
       border-bottom-right-radius: 50%;
     }
@@ -658,5 +658,29 @@ input[type="text"], input[type="password"]{
 @media (max-width: 500px) {
   .grid-container {
       grid-template-columns: 1fr;
+  }
+}
+#left1 {
+  width: 250px;
+  overflow-y: scroll;
+  z-index: 10;
+  transition: transform 0.3s ease;
+  background-color: white;
+}
+#left1.active {
+  transform: translateX(0);
+}
+@media (max-width: 760px) {
+  #left1 {
+      transform: translateX(-100%);
+      position: fixed;
+      height:500px;
+  }
+  .toggle-button {
+      display: block;
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 20;
   }
 }
