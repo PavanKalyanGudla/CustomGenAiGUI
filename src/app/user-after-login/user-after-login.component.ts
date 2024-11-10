@@ -32,7 +32,6 @@ export class UserAfterLoginComponent {
   profilePicSrc: string | ArrayBuffer | undefined;
   imageAnalysisSrc: ArrayBuffer | undefined;
   heading:String = "Unlock the Power of Generative AI";
-  public sidebar : any;
   userSettingsFlag:String="none";
   displayTransFlag:String="none";
   inputMsg1:String="";
@@ -65,7 +64,6 @@ export class UserAfterLoginComponent {
 
   ngOnInit(){
     let userObjStr = localStorage.getItem("userObjectData");
-    this.sidebar = document.getElementById('left');
     if(userObjStr != null){
       this.userObj = JSON.parse(userObjStr);
       this.userObjEdit = JSON.parse(userObjStr);
@@ -137,6 +135,8 @@ export class UserAfterLoginComponent {
   }
 
   openSettings(){
+    this.isSidebarActive = false;
+    this.logoFlag = true;
     this.userSettingsFlag = "block";
   }
 
@@ -145,6 +145,8 @@ export class UserAfterLoginComponent {
   }
 
   editProfilePopUp(){
+    this.isSidebarActive = false;
+    this.logoFlag = true;
     (this.editProfile != null)?this.editProfile.style.display = "block":"";
     this.userObjEdit = JSON.parse(localStorage.getItem("userObjectData")+"");
   }
@@ -154,6 +156,8 @@ export class UserAfterLoginComponent {
   }
 
   openAccountSettingsPopup(){
+    this.isSidebarActive = false;
+    this.logoFlag = true;
     (this.accountSettings != null)? this.accountSettings.style.display = "block" : "";
     this.userObjEdit = JSON.parse(localStorage.getItem("userObjectData")+"");
     this.password = "";
@@ -164,7 +168,9 @@ export class UserAfterLoginComponent {
     (this.accountSettings != null)?this.accountSettings.style.display = "none":""; 
   }
 
-  openHelpSupport(){ 
+  openHelpSupport(){
+    this.isSidebarActive = false;
+    this.logoFlag = true;
     (this.helpSupport != null)?this.helpSupport.style.display = "block" : ""; 
   }
 
@@ -255,7 +261,7 @@ export class UserAfterLoginComponent {
       reader.readAsDataURL(new Blob([data]));
     })
   }
-  
+  streamedData : string="";
   getResponse(){
     if(this.inputMsg1!="" && this.inputMsg1!=" " &&this.inputMsg1.trim()!=""){
       if(this.selectedService=='gptbot'){
@@ -416,15 +422,6 @@ export class UserAfterLoginComponent {
       }else{
         this.infoFlag = false;
       }
-    }
-  }
-
-  leftContainerEvent() {
-    const sidebar = document.getElementById("left") as HTMLElement | null;
-    if (sidebar?.classList.contains("open")) {
-        sidebar.classList.remove("open");
-    } else {
-        sidebar?.classList.add("open");
     }
   }
 
@@ -745,6 +742,12 @@ export class UserAfterLoginComponent {
     if (this.fileUrl) {
       URL.revokeObjectURL(this.fileUrl);
     }
+  }
+  isSidebarActive = false;
+  logoFlag = true;
+  leftContainerEvent() {
+    this.isSidebarActive = !this.isSidebarActive;
+    this.logoFlag = !this.logoFlag;
   }
 }
 

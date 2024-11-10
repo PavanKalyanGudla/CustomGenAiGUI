@@ -9,6 +9,7 @@ export class HomeComponent {
  
   public signUpModel :any;
   public signInModel :any;
+  logoFlag:boolean = true;
 
   ngOnInit(){
     this.signUpModel = document.getElementById("signUp");
@@ -37,5 +38,9 @@ export class HomeComponent {
     if(this.signInModel != null){
       this.signInModel.style.display = "none";
     }
+  }
+
+  openMenu(){
+    this.logoFlag = !this.logoFlag;
   }
 }
