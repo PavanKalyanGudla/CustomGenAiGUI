@@ -9,14 +9,13 @@ import { ImageAnalysisTransaction } from '../Model/image-analysis-transaction';
 import { TranslationTransaction } from '../Model/translation-transaction';
 import { ResumeAnalysisTransaction } from '../Model/resume-analysis-transaction';
 import { environment } from 'src/environments/environment';
+import { PromptRequest } from '../Model/PromptRequest';
+import { GifChatHistory } from '../Model/gif-chat-history';
 
 @Injectable({
   providedIn: 'root'
 })
 export class HttpService {
-
-  // private host : string = "http://localhost:8080";
-  // private host : string = "http://ec2-18-117-143-57.us-east-2.compute.amazonaws.com:8080";
 
   private host : string = environment.apiUrl;
 
@@ -102,6 +101,14 @@ export class HttpService {
 
   getFluxResponse(text:String):any{
     return this._httpClient.get(this.host+"/stream?message="+text);
+  }
+
+  generateGif(request : PromptRequest):any{
+    return this._httpClient.post(this.host+"/generateGif",request,{responseType : 'arraybuffer'});
+  }
+
+  getGifChatHistory(email : String, password : String):Observable<{[date: string]: GifChatHistory[]}>{
+    return this._httpClient.get<{[date: string]: GifChatHistory[]}>(this.host+"/getGifChatHistory?email="+email+"&password="+password);
   }
 
 }

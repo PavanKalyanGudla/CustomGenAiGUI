@@ -11,6 +11,8 @@ import { Observable, of, switchMap, tap } from 'rxjs';
 import { ResumeAnalysisTransaction } from '../Model/resume-analysis-transaction';
 import { ResponseObj } from '../Model/response-obj';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { PromptRequest } from '../Model/PromptRequest';
+import { GifChatHistory } from '../Model/gif-chat-history';
 
 @Component({
   selector: 'app-user-after-login',
@@ -25,6 +27,9 @@ export class UserAfterLoginComponent {
   public accountSettings : any;
   public helpSupport : any;
   public viewResume : any;
+  public micSoundOn : any;
+  public micSoundOff : any;
+  gifPrompt : PromptRequest = new PromptRequest();
   selectedFile: File | null = null;
   analysisFile: File | null = null;
   resumeFile: File | null = null;
@@ -41,10 +46,12 @@ export class UserAfterLoginComponent {
   imageAnalysisList: Array<{ question: String, image:String, answer: any }> = [];
   resumeAnalysisList : Array<{ question: String, fileName: String, roleType:String, answer: any }> = [];
   imageList: Array<{ question: String, answer: any }> = [];
+  gifList:Array<{question: String, answer:any}> = [];
   translatorList: Array<{ question: String, answer: any }> = [];
-  transactionsMap: { [date: string]: ChatTransaction[] | ImageChatHistory[] | ImageAnalysisTransaction[] | TranslationTransaction[] | ResumeAnalysisTransaction[]} = {};
+  transactionsMap: { [date: string]: ChatTransaction[] | ImageChatHistory[] | ImageAnalysisTransaction[] | TranslationTransaction[] | ResumeAnalysisTransaction[] | GifChatHistory[]} = {};
   chatTransactionsMap: { [date: string]: ChatTransaction[] } = {};
   imageChatTransactionsMap: { [date: string]: ImageChatHistory[] } = {};
+  gifChatTransactionsMap : {[date: string]: GifChatHistory[]} = {};
   imageAnalysisTransactionsMap: { [date: string]: ImageAnalysisTransaction[] } = {};
   resumeAnalysisTransactionsMap: { [date: string]: ResumeAnalysisTransaction[] } = {};
   translationTransactionMap : {[date: string]: TranslationTransaction[]} = {};
@@ -56,6 +63,9 @@ export class UserAfterLoginComponent {
   @ViewChild('uploadInput') uploadInput!: ElementRef;
   @ViewChild('sendButton', { static: false }) sendButton!: ElementRef;
 
+  recognition: any;
+  isListening: boolean = false;
+  
   constructor(private _router : Router, 
     private _httpService : HttpService,
     private cdr: ChangeDetectorRef,
@@ -71,6 +81,8 @@ export class UserAfterLoginComponent {
       this.accountSettings = document.getElementById("accountSettings");
       this.helpSupport = document.getElementById("helpSupport");
       this.viewResume = document.getElementById("viewResume");
+      this.micSoundOn = document.getElementById('micSoundOn');
+      this.micSoundOff = document.getElementById('micSoundOff');
       this.transactionsMap={};
       this.transactionList=[];
       this.getProfilePic();
@@ -79,6 +91,7 @@ export class UserAfterLoginComponent {
       this.getImageAnalysisHistory();
       this.getTranslate();
       this.getResumeAnalysisHistory();
+      this.getGifChatHistory();
     }
     const fileInput = document.getElementById('fileInput');
     if(fileInput){
@@ -95,6 +108,27 @@ export class UserAfterLoginComponent {
         }
       });
     }
+    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Your browser does not support the Web Speech API. Please use a supported browser like Chrome.");
+    }else {
+      this.recognition = new SpeechRecognition();
+      this.recognition.lang = 'en-US';
+      this.recognition.interimResults = true;
+      this.recognition.continuous = true;
+      this.recognition.onresult = (event: any) => {
+        let transcript = '';        
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const result = event.results[i];
+          transcript += result[0].transcript;
+        }
+        this.inputMsg1 = transcript;
+      };
+      this.recognition.onend = () => {
+        this.isListening = false;
+      };
+    }
+
   }
 
   ngAfterViewInit(): void {
@@ -306,6 +340,22 @@ export class UserAfterLoginComponent {
             this.transactionList = this.imageAnalysisList;
           });
         }
+      }else if(this.selectedService == "gifgenerate"){
+        this.loadingFlag = true;
+        this.gifPrompt.prompt = this.inputMsg1;
+        this.gifPrompt.user = this.userObj;
+        this._httpService.generateGif(this.gifPrompt).subscribe((data:ArrayBuffer) =>{
+          let blob = new Blob([data], { type: 'image/gif' });
+          const reader = new FileReader();
+          reader.readAsDataURL(blob);
+          reader.onloadend = () => {
+            let gif = reader.result;
+            this.gifList.push({question:this.inputMsg1,answer:gif});
+          };
+          this.inputMsg1=""
+          this.loadingFlag = false;
+          this.getGifChatHistory();
+        })
       }
     }
   }
@@ -325,6 +375,15 @@ export class UserAfterLoginComponent {
       this.imageChatTransactionsMap=data;
       if(this.imageChatTransactionsMap != null){
         this.addTodaysImageChatTransactionsToMessageList(this.getFormattedDate());
+      }
+    })
+  }
+
+  getGifChatHistory(){
+    this._httpService.getGifChatHistory(this.userObj.email,this.userObj.password).subscribe((data) =>{
+      this.gifChatTransactionsMap = data;
+      if(this.gifChatTransactionsMap != null){
+        this.addTodaysGifChatTransactionsToMessageList(this.getFormattedDate());
       }
     })
   }
@@ -372,6 +431,10 @@ export class UserAfterLoginComponent {
     }else if(this.selectedService=="resume"){
       this.heading = "Elevate Your Hiring Process with Gen AI";
       this.transactionsMap = this.resumeAnalysisTransactionsMap;
+    }else if(this.selectedService=="gifgenerate"){
+      this.heading = "Fast and easy GIF creation.";
+      this.transactionList = this.gifList;
+      this.transactionsMap = this.gifChatTransactionsMap;
     }
     this.infoFlag=(this.transactionList.length != 0)?true:false;
   }
@@ -393,6 +456,9 @@ export class UserAfterLoginComponent {
     }else if(this.selectedService=="translate"){
       this.addTodaysTranslationTransactionsToMessageList(e);
       this.openDisplayTransPopUp();
+    }else if(this.selectedService=="gifgenerate"){
+      this.addTodaysGifChatTransactionsToMessageList(e);
+      this.transactionList = this.gifList;
     }else if(this.selectedService=="resume"){
     }
     this.infoFlag = (this.transactionList.length>0)?true:false;
@@ -431,6 +497,25 @@ export class UserAfterLoginComponent {
       this.imageList=[];
       this.imageChatTransactionsMap[today].forEach(transaction => {
         this.imageList.push({
+          question: transaction.question,
+          answer: "data:application/octet-stream;base64,"+transaction.answer
+        });
+      });
+      if(this.messageList.length != 0 && date == this.getFormattedDate()){
+        this.infoFlag = true;
+      }else{
+        this.infoFlag = false;
+      }
+      this.cdr.detectChanges();
+    }
+  }
+
+  addTodaysGifChatTransactionsToMessageList(date : any) {
+    const today = date;
+    if (this.gifChatTransactionsMap.hasOwnProperty(today)) {
+      this.gifList=[];
+      this.gifChatTransactionsMap[today].forEach(transaction => {
+        this.gifList.push({
           question: transaction.question,
           answer: "data:application/octet-stream;base64,"+transaction.answer
         });
@@ -749,6 +834,74 @@ export class UserAfterLoginComponent {
     this.isSidebarActive = !this.isSidebarActive;
     this.logoFlag = !this.logoFlag;
   }
+  adjustWidth(event: any, textareaId: string) {
+    const textarea = document.getElementById(textareaId) as HTMLTextAreaElement;
+    if (textarea) {
+      textarea.style.width = 'auto';
+      textarea.style.width = `${textarea.scrollWidth + 10}px`;
+    }
+  }
+
+  micOn:boolean = false;
+  recognizedText: string = '';
+  changeMicOption(){
+    this.micOn = !this.micOn;
+    if(this.micOn==true){
+      this.startListening();
+    }else{
+      this.stopListening();
+    }
+    this.cdr.detectChanges();
+  }
+  startListening(): void {
+    if(this.micSoundOn){
+      this.micSoundOn.play();
+      this.micSoundOff.currentTime=0;
+    }
+    if (this.recognition && !this.isListening) {
+      this.inputMsg1="";
+      this.recognition.start();
+      this.isListening = true;
+    }
+  }
+  stopListening(): void {
+    if(this.micSoundOff){
+      this.micSoundOff.play();
+      this.micSoundOn.currentTime=0;
+    }
+    if (this.recognition && this.isListening) {
+      this.recognition.stop();
+      this.isListening = false;
+    }
+  }
+  readUp:boolean=false;
+  startOrStopRead(inputText: any): void {
+    this.readUp = !this.readUp;
+    if ('speechSynthesis' in window) {
+      if (!this.readUp) {
+        speechSynthesis.cancel();
+      } else {
+        if (inputText && inputText.trim() !== "") {
+          const utterance = new SpeechSynthesisUtterance(inputText);
+          utterance.lang = 'en-US';  
+          utterance.onend = () => {
+            this.readUp = false;
+          };
+          utterance.onerror = (error) => {
+            console.error('Speech synthesis error:', error);
+            this.readUp = false;
+          };
+          speechSynthesis.speak(utterance);
+        } else {
+          alert("Please provide some text to speak.");
+          this.readUp = false;
+        }
+      }
+    } else {
+      alert("Your browser does not support the Web Speech API for Text-to-Speech.");
+    }
+  }
+  
 }
 
 type PossibleTransactionArray = ChatTransaction[] | ImageChatHistory[] | ImageAnalysisTransaction[] | TranslationTransaction[] | ResumeAnalysisTransaction[];
