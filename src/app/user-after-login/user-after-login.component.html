@@ -55,7 +55,7 @@
                                     <i class="fa-solid fa-file-alt"></i>
                                 </div>
                                 <div class="service-box s-box2" (click)="selectService1('gifgenerate')">
-                                    <i class="fa-solid fa-file-gif">GIF</i>
+                                    <i class="fa-solid fa-file-image"></i>
                                 </div>
                             </div>
                         </section>
@@ -120,7 +120,7 @@
                                 <div>
                                     <div class="outgoing-chats-msg">
                                         <p *ngIf="selectedService == 'imageanalysis'"><img [src]="i.image" alt="No Image"><br>{{i.question}}</p>
-                                        <p *ngIf="selectedService != 'imageanalysis'">{{i.question}}</p>
+                                        <p *ngIf="selectedService != 'imageanalysis'" >{{i.question}}</p>
                                     </div>
                                 </div>
                                 <div class="received-msg">

@@ -7,7 +7,7 @@ import { ImageChatHistory } from '../Model/image-chat-history';
 import { ImageAnalysisTransaction } from '../Model/image-analysis-transaction';
 import { LanguageList } from '../Model/language-list';
 import { TranslationTransaction } from '../Model/translation-transaction';
-import { Observable, of, switchMap, tap } from 'rxjs';
+import { catchError, Observable, of, switchMap, tap } from 'rxjs';
 import { ResumeAnalysisTransaction } from '../Model/resume-analysis-transaction';
 import { ResponseObj } from '../Model/response-obj';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -19,7 +19,7 @@ import { GifChatHistory } from '../Model/gif-chat-history';
   templateUrl: './user-after-login.component.html',
   styleUrls: ['./user-after-login.component.css']
 })
-export class UserAfterLoginComponent {
+export class UserAfterLoginComponent{
 
   userObj : User = new User();
   userObjEdit : User = new User();
@@ -144,7 +144,7 @@ export class UserAfterLoginComponent {
       this.sendButton.nativeElement.click();
     }
   }
-  
+
   uploadImage(){
     if (this.uploadInput) {
       this.uploadInput.nativeElement.click();
@@ -316,9 +316,9 @@ export class UserAfterLoginComponent {
           reader.onloadend = () => {
             let image = reader.result;
             this.imageList.push({ question: this.inputMsg1, answer: image });
+            this.inputMsg1=""
+            this.loadingFlag = false;
           };
-          this.inputMsg1=""
-          this.loadingFlag = false;
           this.getImageChatHistory();
         })
       }else if(this.selectedService=="imageanalysis"){
@@ -330,9 +330,9 @@ export class UserAfterLoginComponent {
               reader.onload = (e) => {
                 const arrayBuffer = reader.result as ArrayBuffer;
                 this.imageAnalysisSrc = arrayBuffer;
+                this.inputMsg1 = "";
+                this.loadingFlag = false;
               };
-              this.inputMsg1 = "";
-              this.loadingFlag = false;
               return this.getImageAnalysisHistory1();
             })
           ).subscribe(() => {
@@ -344,17 +344,24 @@ export class UserAfterLoginComponent {
         this.loadingFlag = true;
         this.gifPrompt.prompt = this.inputMsg1;
         this.gifPrompt.user = this.userObj;
-        this._httpService.generateGif(this.gifPrompt).subscribe((data:ArrayBuffer) =>{
-          let blob = new Blob([data], { type: 'image/gif' });
-          const reader = new FileReader();
+        this._httpService.generateGif(this.gifPrompt)
+        .pipe(
+          switchMap((data:ArrayBuffer) => {
+            let blob = new Blob([data], { type: 'image/gif' });
+            const reader = new FileReader();
           reader.readAsDataURL(blob);
           reader.onloadend = () => {
             let gif = reader.result;
             this.gifList.push({question:this.inputMsg1,answer:gif});
+            this.inputMsg1=""
+            this.loadingFlag = false;
           };
-          this.inputMsg1=""
-          this.loadingFlag = false;
-          this.getGifChatHistory();
+          return this.getGifChatHistory1();
+          })
+        )
+        .subscribe((data:ArrayBuffer) =>{
+          this.transactionsMap = this.gifChatTransactionsMap;
+            this.transactionList = this.gifList;
         })
       }
     }
@@ -382,9 +389,7 @@ export class UserAfterLoginComponent {
   getGifChatHistory(){
     this._httpService.getGifChatHistory(this.userObj.email,this.userObj.password).subscribe((data) =>{
       this.gifChatTransactionsMap = data;
-      if(this.gifChatTransactionsMap != null){
-        this.addTodaysGifChatTransactionsToMessageList(this.getFormattedDate());
-      }
+      this.addTodaysGifChatTransactionsToMessageList(this.getFormattedDate());
     })
   }
 
@@ -403,6 +408,15 @@ export class UserAfterLoginComponent {
       })
     );
   }  
+
+  getGifChatHistory1() : Observable<{[date: string]: GifChatHistory[]}>{
+    return this._httpService.getGifChatHistory(this.userObj.email,this.userObj.password).pipe(
+      tap((data) => {
+        this.gifChatTransactionsMap = data;
+        this.addTodaysGifChatTransactionsToMessageList(this.getFormattedDate());
+      })
+    );
+  }
 
   compareFn = (a: any, b: any): number => {
     const dateA = new Date(a.key).getTime();
@@ -483,6 +497,8 @@ export class UserAfterLoginComponent {
         });
       });
       this.transactionList = this.messageList;
+      // this.scrollDown.scrollDown = this.scrollDown.scrollHeight;
+      // alert(this.scrollDown.scrollHeight);
       if(this.messageList.length != 0 && date == this.getFormattedDate()){
         this.infoFlag = true;
       }else{
@@ -525,6 +541,7 @@ export class UserAfterLoginComponent {
       }else{
         this.infoFlag = false;
       }
+      console.log(this.transactionsMap['length']+""+this.gifChatTransactionsMap['length']);
       this.cdr.detectChanges();
     }
   }
@@ -578,7 +595,6 @@ export class UserAfterLoginComponent {
         )
         .subscribe(() => {
           this.transactionsMap = this.translationTransactionMap;
-          console.log(this.transactionsMap);
           this.cdr.detectChanges();
         });
     }
@@ -715,6 +731,7 @@ export class UserAfterLoginComponent {
   showConfPassColor:boolean=false;
   @ViewChild('showPass') showPass: any;
   @ViewChild('showConfPass') showConfPass: any;
+  
   showPassword(){
     if(this.showPass.nativeElement.type=='password'){
       this.showPass.nativeElement.type='text';
@@ -820,6 +837,7 @@ export class UserAfterLoginComponent {
   }
 
   closeResume(){
+    speechSynthesis.cancel();
     (this.viewResume != null)?this.viewResume.style.display = "none":"";
   }
 
