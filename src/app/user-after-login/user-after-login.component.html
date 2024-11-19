@@ -110,6 +110,7 @@
                                 </div>
                                 <div class="service-box s-box5" *ngIf="resumeAnaFlag">
                                     <h1>Analysis</h1>
+                                    <span (click)="startOrStopRead(resumeAnalyResp)" id="speaker"><i class="fa-solid fa-volume-high"></i></span>
                                     <div [innerHTML]="resumeAnalyResp | safeHtml"></div>
                                 </div>
                             </div>
