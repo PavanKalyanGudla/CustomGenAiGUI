@@ -331,13 +331,14 @@ export class UserAfterLoginComponent{
                 const arrayBuffer = reader.result as ArrayBuffer;
                 this.imageAnalysisSrc = arrayBuffer;
                 this.inputMsg1 = "";
-                this.loadingFlag = false;
               };
+              this.loadingFlag = false;
               return this.getImageAnalysisHistory1();
             })
           ).subscribe(() => {
             this.transactionsMap = this.imageAnalysisTransactionsMap;
             this.transactionList = this.imageAnalysisList;
+            this.infoFlag = true;
           });
         }
       }else if(this.selectedService == "gifgenerate"){
